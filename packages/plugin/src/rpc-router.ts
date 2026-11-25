@@ -6,6 +6,10 @@ import { TRANSPORT_UPGRADE_CAPABILITY, type TransportUpgradeHost } from './trans
 import {
   ATTENTION_INBOX_CAPABILITY,
   BINARY_UPLOAD_CAPABILITY,
+  DIMA_CAPABILITY,
+  DIMA_RPC_METHODS,
+  DIMA_WORKSPACE_TYPE,
+  dimaHistoryRequestSchema,
   LAN_UPLOAD_CAPABILITY,
   attentionAckUnreadRequestSchema,
   attentionFollowRequestSchema,
@@ -31,6 +35,7 @@ import type { RemoteFileViewerBridge } from './file-viewer-bridge.js'
 import type { HarnessRemoteBridge } from './harness-remote-bridge.js'
 import type { SafeLogger } from './logging.js'
 import type { AuthenticatedPeerChannel } from './types.js'
+import type { HostPluginRuntime } from './service.js'
 import type { CodexPeerBridge } from './codex/peer-bridge.js'
 import type { AcpPeerBridge } from './acp/peer-bridge.js'
 import { RpcError, safeErrorCode, workspaceFileFailureReason } from './safe-error.js'
@@ -60,6 +65,7 @@ const apiMethods = new Set([
   ...sessionTransferMethods,
   ...attentionRpcMethods,
   ...WORKSPACE_GIT_METHODS,
+  ...DIMA_RPC_METHODS,
   'harness.transport.describe',
   'dsh.web.open',
   'dsh.web.close',
@@ -152,6 +158,7 @@ export class RpcRouter {
     private readonly sameLinkIpv6Endpoints?: AuthenticatedPeerChannel['sameLinkIpv6Endpoints'],
     private readonly workspaceGit?: WorkspaceGitHost,
     private readonly attention?: AttentionPeerRoute,
+    private readonly dima?: Pick<HostPluginRuntime, 'dimaProbe' | 'dimaCatalog' | 'dimaHistory'>,
   ) {}
 
   async closePeerStreams(): Promise<void> {
@@ -237,7 +244,11 @@ export class RpcRouter {
         return { closed: true }
       case 'harness.transport.describe': {
         const { sameLinkIpv6Pair } = z.object({ sameLinkIpv6Pair: sameLinkIpv6PairSchema.optional() }).strict().parse(params)
-        const hostCapabilities = (await this.capabilities()).filter(capability => capability !== BINARY_UPLOAD_CAPABILITY && capability !== LAN_UPLOAD_CAPABILITY)
+        const [describedCapabilities, dimaAvailable] = await Promise.all([
+          this.capabilities(),
+          this.dima?.dimaProbe().catch(() => false),
+        ])
+        const hostCapabilities = describedCapabilities.filter(capability => capability !== BINARY_UPLOAD_CAPABILITY && capability !== LAN_UPLOAD_CAPABILITY)
         const remoteAvailable = hostCapabilities.includes('harness.remote.v1') || hostCapabilities.includes('harness.remote.v3')
         const capabilities = [...new Set([...hostCapabilities, 'remote.history.compact.v1',
           ...(this.harnessRemote === undefined || !remoteAvailable ? [] : ['harness.remote.stream.transfer.v1']),
@@ -250,6 +261,7 @@ export class RpcRouter {
           ...(this.dshWeb?.available() ? [DSH_WEB_CAPABILITY] : []),
           ...(this.transportUpgrade === undefined ? [] : [TRANSPORT_UPGRADE_CAPABILITY]),
           ...(this.attention === undefined ? [] : [ATTENTION_INBOX_CAPABILITY]),
+          ...(dimaAvailable ? [DIMA_CAPABILITY] : []),
         ])]
         let workspaceTypes: RemoteWorkspaceTypeDescription[] | undefined
         if (this.workspaceTypes !== undefined) {
@@ -258,6 +270,10 @@ export class RpcRouter {
           } catch {
             workspaceTypes = []
           }
+        }
+        if (dimaAvailable) {
+          workspaceTypes ??= []
+          workspaceTypes.push({ id: DIMA_WORKSPACE_TYPE, name: 'DimAgent', capability: DIMA_CAPABILITY, available: true })
         }
         const sameLinkIpv6Endpoints = await this.sameLinkIpv6Endpoints?.(sameLinkIpv6Pair) ?? []
         if (sameLinkIpv6Endpoints.length > 0) this.logger?.info('nominated IPv6 WebRTC endpoints verified on-link', { mode: 'LAN' })
@@ -306,6 +322,11 @@ export class RpcRouter {
         }
         return this.fileViewer.call(params)
       }
+      case 'dima.app.catalog':
+        emptyParamsSchema.parse(params)
+        return this.requireDima().dimaCatalog()
+      case 'dima.app.history':
+        return this.requireDima().dimaHistory(dimaHistoryRequestSchema.parse(params))
       case 'codex.app.call': return this.requireCodex().call(params)
       case 'codex.app.respond': return this.requireCodex().respond(params)
       case 'codex.app.stream.open': return this.requireCodex().openStream(params)
@@ -396,6 +417,11 @@ export class RpcRouter {
       throw new RpcError('FEATURE_NOT_SUPPORTED', 'Codex Remote is disabled or unavailable on this Host.')
     }
     return this.codex
+  }
+
+  private requireDima() {
+    if (!this.dima) throw new RpcError('FEATURE_NOT_SUPPORTED', 'DimAgent is unavailable on this Host.')
+    return this.dima
   }
 
   private requireAcp(): AcpPeerBridge {

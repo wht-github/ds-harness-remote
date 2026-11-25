@@ -86,6 +86,7 @@ export interface AppState {
   hostDescriptor?: HostDescriptor
   hostSessionEvents: boolean
   hostWorkspaceGit: boolean
+  dimaAvailable: boolean
   codexAvailable: boolean
   cursorAvailable: boolean
   antigravityAvailable: boolean
@@ -266,7 +267,7 @@ export function selectCustomAcpBackends(state: Pick<AppState, 'customAcpBackends
 }
 
 export function initialData(): Pick<AppState,
-  'config' | 'account' | 'devices' | 'selectedDevice' | 'connection' | 'hostDescriptor' | 'hostSessionEvents' | 'hostWorkspaceGit' | 'codexAvailable' | 'cursorAvailable' | 'antigravityAvailable' | 'piAvailable' | 'opencodeAvailable' | 'claudeAvailable' | 'hermesAvailable' | 'customAcpBackends' | 'workspaceCatalog' | 'workspaces' |
+  'config' | 'account' | 'devices' | 'selectedDevice' | 'connection' | 'hostDescriptor' | 'hostSessionEvents' | 'hostWorkspaceGit' | 'dimaAvailable' | 'codexAvailable' | 'cursorAvailable' | 'antigravityAvailable' | 'piAvailable' | 'opencodeAvailable' | 'claudeAvailable' | 'hermesAvailable' | 'customAcpBackends' | 'workspaceCatalog' | 'workspaces' |
   'favoriteWorkspaces' | 'recentWorkspaces' | 'archivedSessionIds' | 'pinnedSessionIds' | 'sessions' | 'selectedSession' | 'codexReadySessionId' | 'currentWorkSessionIds' | 'messages' | 'sessionModels' | 'modelSelecting' | 'permissionSelecting' | 'agentPresetOptions' | 'agentPresetLoading' | 'agentPresetSelecting' |
   'acpReadOnlySessionId' | 'historyHasMore' | 'historyLoadingOlder' | 'oldestLoadedSeq' | 'transportPreference' | 'authPhase' | 'refreshing' | 'busyAction' | 'error' |
   'connectionProbeOrder' | 'connectionNetworkDetails' | 'reauthRequired' | 'feedbackBySession' | 'commandResult' | 'sessionLifecycles' | 'sessionProjectionSeqs'> {
@@ -281,6 +282,7 @@ export function initialData(): Pick<AppState,
     hostDescriptor: undefined,
     hostSessionEvents: false,
     hostWorkspaceGit: false,
+    dimaAvailable: false,
     codexAvailable: false,
     cursorAvailable: false,
     antigravityAvailable: false,

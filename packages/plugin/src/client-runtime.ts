@@ -1,3 +1,4 @@
+import { DIMA_WORKSPACE_TYPE } from '@dsh-remote/protocol'
 import { parseCodexSessionId } from './codex/session-id.js'
 import { uploadRemoteBuffer } from './remote-file-upload.js'
 import { workspaceUploadMaxBytes } from './workspace-transfer-limits.js'
@@ -495,6 +496,7 @@ export class ClientModeRuntime {
 
   async listRemoteWorkspaces(targetDeviceId: string, signal?: AbortSignal): Promise<RemoteWorkspaceView[]> {
     const remote = await this.ensureConnected(targetDeviceId, signal)
+    if (remote.features.dima && !remote.features.remoteGateway) return []
     return readRemoteWorkspaceBaseline(new RemoteTypertGateway(remote.client), signal)
   }
 
@@ -525,7 +527,7 @@ export class ClientModeRuntime {
       }
       const knownAcpBackends = new Set<string>(['cursor', 'antigravity', 'pi', 'opencode', 'claude', 'hermes'])
       for (const wt of remote.features.workspaceTypes ?? []) {
-        if (wt.id !== 'codex' && wt.id !== 'harness' && wt.available) knownAcpBackends.add(wt.id)
+        if (wt.id !== 'codex' && wt.id !== DIMA_WORKSPACE_TYPE && wt.id !== 'harness' && wt.available) knownAcpBackends.add(wt.id)
       }
       for (const backend of knownAcpBackends) {
         if (!hasAcpFeature(remote.features, backend)) continue
@@ -1212,6 +1214,7 @@ export class ClientModeRuntime {
 }
 
 function hasAcpFeature(features: RemoteHostFeatures, backend: string): boolean {
+  if (backend === DIMA_WORKSPACE_TYPE) return false
   if (backend === 'cursor') return features.cursor
   if (backend === 'antigravity') return features.antigravity
   if (backend === 'pi') return Boolean(features.pi)

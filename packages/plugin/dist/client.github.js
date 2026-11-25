@@ -1705,6 +1705,18 @@ Minimum version required to store current data is: ` + bestVersion + `.
 
   // packages/plugin/src/client-locale.ts
   var localeNamespace = "ds-harness-remote", en = {
+    dimaHistoryTitle: "DimAgent history \xB7 {source}",
+    dimaWorkspaces: "Workspaces",
+    dimaSessions: "Sessions",
+    dimaBranch: "Branch",
+    dimaBack: "Back",
+    dimaLoading: "Loading\u2026",
+    dimaNoWorkspaces: "No DimAgent workspaces.",
+    dimaNoSessions: "This workspace has no sessions.",
+    dimaNoBranches: "This session has no branches.",
+    dimaNoMessages: "This branch has no messages.",
+    dimaUser: "User",
+    dimaTruncated: "Showing part of this branch\u2019s history.",
     serverSavedLive: "Server address saved and applied.",
     saveServerBeforeLogin: "Save the Server address before continuing sign-in or pairing.",
     pairingLoginTab: "DSH Go",
@@ -2105,6 +2117,18 @@ If a code was sent, recover the original submission without changing it.`,
     hermesVirtualWorkspace: "Hermes virtual workspace",
     codexVirtualSessions: "Sessions"
   }, zh = {
+    dimaHistoryTitle: "DimAgent \u4F1A\u8BDD\u5386\u53F2 \xB7 {source}",
+    dimaWorkspaces: "\u5DE5\u4F5C\u533A",
+    dimaSessions: "\u4F1A\u8BDD",
+    dimaBranch: "\u5206\u652F",
+    dimaBack: "\u8FD4\u56DE",
+    dimaLoading: "\u6B63\u5728\u8BFB\u53D6\u2026",
+    dimaNoWorkspaces: "\u6CA1\u6709 DimAgent \u5DE5\u4F5C\u533A\u3002",
+    dimaNoSessions: "\u8FD9\u4E2A\u5DE5\u4F5C\u533A\u8FD8\u6CA1\u6709\u4F1A\u8BDD\u3002",
+    dimaNoBranches: "\u8FD9\u4E2A\u4F1A\u8BDD\u6CA1\u6709\u53EF\u67E5\u770B\u7684\u5206\u652F\u3002",
+    dimaNoMessages: "\u8FD9\u4E2A\u5206\u652F\u8FD8\u6CA1\u6709\u6D88\u606F\u3002",
+    dimaUser: "\u7528\u6237",
+    dimaTruncated: "\u4EC5\u663E\u793A\u6B64\u5206\u652F\u7684\u90E8\u5206\u5386\u53F2\u3002",
     serverSavedLive: "\u670D\u52A1\u5668\u5730\u5740\u5DF2\u4FDD\u5B58\u5E76\u751F\u6548\u3002",
     saveServerBeforeLogin: "\u8BF7\u5148\u4FDD\u5B58\u670D\u52A1\u5668\u5730\u5740\uFF0C\u518D\u7EE7\u7EED\u767B\u5F55\u6216\u914D\u5BF9\u3002",
     pairingLoginTab: "DSH Go",
@@ -2505,6 +2529,18 @@ DSH Go \u626B\u7801\u6682\u4E0D\u652F\u6301\u591A\u53F0\u8BBE\u5907\u63A7\u5236\
     hermesVirtualWorkspace: "Hermes \u5DE5\u4F5C\u533A",
     codexVirtualSessions: "Sessions"
   }, ru = {
+    dimaHistoryTitle: "\u0418\u0441\u0442\u043E\u0440\u0438\u044F DimAgent \xB7 {source}",
+    dimaWorkspaces: "\u0420\u0430\u0431\u043E\u0447\u0438\u0435 \u043E\u0431\u043B\u0430\u0441\u0442\u0438",
+    dimaSessions: "\u0421\u0435\u0441\u0441\u0438\u0438",
+    dimaBranch: "\u0412\u0435\u0442\u043A\u0430",
+    dimaBack: "\u041D\u0430\u0437\u0430\u0434",
+    dimaLoading: "\u0417\u0430\u0433\u0440\u0443\u0437\u043A\u0430\u2026",
+    dimaNoWorkspaces: "\u041D\u0435\u0442 \u0440\u0430\u0431\u043E\u0447\u0438\u0445 \u043E\u0431\u043B\u0430\u0441\u0442\u0435\u0439 DimAgent.",
+    dimaNoSessions: "\u0412 \u044D\u0442\u043E\u0439 \u0440\u0430\u0431\u043E\u0447\u0435\u0439 \u043E\u0431\u043B\u0430\u0441\u0442\u0438 \u043D\u0435\u0442 \u0441\u0435\u0441\u0441\u0438\u0439.",
+    dimaNoBranches: "\u0412 \u044D\u0442\u043E\u0439 \u0441\u0435\u0441\u0441\u0438\u0438 \u043D\u0435\u0442 \u0432\u0435\u0442\u043E\u043A.",
+    dimaNoMessages: "\u0412 \u044D\u0442\u043E\u0439 \u0432\u0435\u0442\u043A\u0435 \u043D\u0435\u0442 \u0441\u043E\u043E\u0431\u0449\u0435\u043D\u0438\u0439.",
+    dimaUser: "\u041F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u0442\u0435\u043B\u044C",
+    dimaTruncated: "\u041F\u043E\u043A\u0430\u0437\u0430\u043D\u0430 \u0447\u0430\u0441\u0442\u044C \u0438\u0441\u0442\u043E\u0440\u0438\u0438 \u044D\u0442\u043E\u0439 \u0432\u0435\u0442\u043A\u0438.",
     serverSavedLive: "\u0410\u0434\u0440\u0435\u0441 \u0441\u0435\u0440\u0432\u0435\u0440\u0430 \u0441\u043E\u0445\u0440\u0430\u043D\u0451\u043D \u0438 \u043F\u0440\u0438\u043C\u0435\u043D\u0451\u043D.",
     saveServerBeforeLogin: "\u0421\u043E\u0445\u0440\u0430\u043D\u0438\u0442\u0435 \u0430\u0434\u0440\u0435\u0441 \u0441\u0435\u0440\u0432\u0435\u0440\u0430, \u043F\u0440\u0435\u0436\u0434\u0435 \u0447\u0435\u043C \u043F\u0440\u043E\u0434\u043E\u043B\u0436\u0438\u0442\u044C \u0432\u0445\u043E\u0434 \u0438\u043B\u0438 \u0441\u043E\u043F\u0440\u044F\u0436\u0435\u043D\u0438\u0435.",
     pairingLoginTab: "DSH Go",
@@ -2905,6 +2941,18 @@ DSH Go \u626B\u7801\u6682\u4E0D\u652F\u6301\u591A\u53F0\u8BBE\u5907\u63A7\u5236\
     hermesVirtualWorkspace: "\u0412\u0438\u0440\u0442\u0443\u0430\u043B\u044C\u043D\u0430\u044F \u0440\u0430\u0431\u043E\u0447\u0430\u044F \u043E\u0431\u043B\u0430\u0441\u0442\u044C Hermes",
     codexVirtualSessions: "\u0421\u0435\u0441\u0441\u0438\u0438"
   }, uk = {
+    dimaHistoryTitle: "\u0406\u0441\u0442\u043E\u0440\u0456\u044F DimAgent \xB7 {source}",
+    dimaWorkspaces: "\u0420\u043E\u0431\u043E\u0447\u0456 \u043F\u0440\u043E\u0441\u0442\u043E\u0440\u0438",
+    dimaSessions: "\u0421\u0435\u0441\u0456\u0457",
+    dimaBranch: "\u0413\u0456\u043B\u043A\u0430",
+    dimaBack: "\u041D\u0430\u0437\u0430\u0434",
+    dimaLoading: "\u0417\u0430\u0432\u0430\u043D\u0442\u0430\u0436\u0435\u043D\u043D\u044F\u2026",
+    dimaNoWorkspaces: "\u041D\u0435\u043C\u0430\u0454 \u0440\u043E\u0431\u043E\u0447\u0438\u0445 \u043F\u0440\u043E\u0441\u0442\u043E\u0440\u0456\u0432 DimAgent.",
+    dimaNoSessions: "\u0423 \u0446\u044C\u043E\u043C\u0443 \u0440\u043E\u0431\u043E\u0447\u043E\u043C\u0443 \u043F\u0440\u043E\u0441\u0442\u043E\u0440\u0456 \u043D\u0435\u043C\u0430\u0454 \u0441\u0435\u0441\u0456\u0439.",
+    dimaNoBranches: "\u0423 \u0446\u0456\u0439 \u0441\u0435\u0441\u0456\u0457 \u043D\u0435\u043C\u0430\u0454 \u0433\u0456\u043B\u043E\u043A.",
+    dimaNoMessages: "\u0423 \u0446\u0456\u0439 \u0433\u0456\u043B\u0446\u0456 \u043D\u0435\u043C\u0430\u0454 \u043F\u043E\u0432\u0456\u0434\u043E\u043C\u043B\u0435\u043D\u044C.",
+    dimaUser: "\u041A\u043E\u0440\u0438\u0441\u0442\u0443\u0432\u0430\u0447",
+    dimaTruncated: "\u041F\u043E\u043A\u0430\u0437\u0430\u043D\u043E \u0447\u0430\u0441\u0442\u0438\u043D\u0443 \u0456\u0441\u0442\u043E\u0440\u0456\u0457 \u0446\u0456\u0454\u0457 \u0433\u0456\u043B\u043A\u0438.",
     serverSavedLive: "\u0410\u0434\u0440\u0435\u0441\u0443 \u0441\u0435\u0440\u0432\u0435\u0440\u0430 \u0437\u0431\u0435\u0440\u0435\u0436\u0435\u043D\u043E \u0439 \u0437\u0430\u0441\u0442\u043E\u0441\u043E\u0432\u0430\u043D\u043E.",
     saveServerBeforeLogin: "\u0417\u0431\u0435\u0440\u0435\u0436\u0456\u0442\u044C \u0430\u0434\u0440\u0435\u0441\u0443 \u0441\u0435\u0440\u0432\u0435\u0440\u0430, \u043F\u0435\u0440\u0448 \u043D\u0456\u0436 \u043F\u0440\u043E\u0434\u043E\u0432\u0436\u0438\u0442\u0438 \u0432\u0445\u0456\u0434 \u0430\u0431\u043E \u0441\u043F\u0430\u0440\u044E\u0432\u0430\u043D\u043D\u044F.",
     pairingLoginTab: "DSH Go",
@@ -5312,6 +5360,9 @@ DSH Go \u626B\u7801\u6682\u4E0D\u652F\u6301\u591A\u53F0\u8BBE\u5907\u63A7\u5236\
       '.dshRemoteHostList{display:flex;flex-direction:column;border-top:1px solid var(--dsw-alias-border-l2);max-height:296px;overflow-y:auto;overscroll-behavior:contain;scrollbar-gutter:stable}.dshRemoteHostList.isCollapsed{max-height:none;overflow-y:visible}.dshRemoteHostList>button{min-height:58px;flex:0 0 auto;display:flex;align-items:center;justify-content:space-between;gap:16px;text-align:left;border:0;border-bottom:1px solid var(--dsw-alias-border-l2);background:transparent;padding:10px 20px 10px 4px;cursor:pointer}.dshRemoteHostList>button:hover:not(:disabled){background:var(--dsw-alias-interactive-bg-hover)}.dshRemoteHostList>button:disabled{opacity:.5;cursor:default}.dshRemoteHostList>button[aria-current="true"]{background:var(--dsw-alias-interactive-bg-hover)}.dshRemoteHostList>button>span{min-width:0;display:flex;flex-direction:column;gap:3px}.dshRemoteHostList>button strong{font-size:14px;font-weight:500}.dshRemoteHostList small{color:var(--dsw-alias-label-secondary);font-size:12px}',
       '.dshRemoteConnectedMenu{position:relative;flex:0 0 auto;margin-right:4px}.dshRemoteConnectedCount{appearance:none;display:inline-flex;align-items:center;justify-content:center;height:22px;border:0;border-radius:999px;background:var(--dsw-alias-bg-module-platform);color:var(--dsw-alias-label-secondary);box-shadow:0 1px 2px rgba(0,0,0,.18),0 0 0 1px rgba(255,255,255,.04) inset;padding:0 10px;font:inherit;font-size:11px;font-weight:500;line-height:17px;white-space:nowrap;cursor:default}.dshRemoteConnectedCount.isOnline{color:var(--dsw-alias-state-success-primary)}.dshRemoteConnectedCount.isInteractive{cursor:pointer}.dshRemoteConnectedCount.isInteractive:hover{filter:brightness(1.08)}.dshRemoteConnectedCount:disabled{opacity:1;cursor:default}.dshRemoteConnectedCount:focus-visible{outline:2px solid var(--dsw-alias-brand-primary);outline-offset:2px}.dshRemoteConnectedPanel{position:absolute;top:calc(100% + 8px);right:0;z-index:4;width:min(320px,calc(100vw - 48px));max-height:min(280px,40vh);overflow:auto;border:1px solid var(--dsw-alias-border-l2);border-radius:12px;background:var(--dsw-alias-bg-layer-2);box-shadow:0 10px 28px rgba(0,0,0,.28);padding:10px 12px}.dshRemoteConnectedPanelTitle{display:block;margin:0 0 6px;color:var(--dsw-alias-label-primary);font-size:12px;font-weight:600}.dshRemoteClientList{display:flex;flex-direction:column}.dshRemoteClientRow{min-height:44px;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 0;border-bottom:1px solid var(--dsw-alias-border-l2)}.dshRemoteClientRow:last-child{border-bottom:0}.dshRemoteClientRow>span{min-width:0;display:flex;flex-direction:column;gap:2px}.dshRemoteClientRow strong{font-size:13px;font-weight:500}.dshRemoteClientRow small{color:var(--dsw-alias-label-secondary);font-size:11px}.dshRemoteClientOnline{display:inline-flex;align-items:center;gap:6px;color:var(--dsw-alias-state-success-primary)!important}.dshRemoteClientOnline::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}',
       ".dshRemoteConnectedCount{height:auto;border-radius:0;background:transparent;box-shadow:none;padding:0 4px;text-decoration:underline;text-decoration-color:color-mix(in srgb,currentColor 45%,transparent);text-underline-offset:3px}.dshRemoteConnectedCount.isInteractive:hover{filter:none;text-decoration-color:currentColor}.dshRemoteConnectedCount:focus-visible{outline-offset:3px;border-radius:3px}",
+      ".dshDimaEntry{width:100%;flex:none;min-height:42px;padding:8px 12px;border:1px solid var(--dsw-alias-border-l2);border-radius:8px;background:var(--dsw-alias-bg-layer-2);text-align:left;cursor:pointer}.dshDimaEntry:hover:not(:disabled),.dshDimaList>button:hover{background:var(--dsw-alias-interactive-bg-hover)}",
+      ".dshDimaBody{gap:14px}.dshDimaBody h3,.dshDimaBody p{margin:0}.dshDimaList{display:grid}.dshDimaList>button{min-height:44px;padding:9px 4px;border:0;border-bottom:1px solid var(--dsw-alias-border-l2);background:transparent;text-align:left;overflow-wrap:anywhere;cursor:pointer}",
+      ".dshDimaBranch{display:flex;align-items:center;gap:8px;font-size:13px}.dshDimaBranch>select{min-width:0;max-width:100%;padding:4px 8px;border:1px solid var(--dsw-alias-border-l2);border-radius:6px;color:inherit;background:var(--dsw-alias-bg-layer-2);font:inherit}.dshDimaBody h3,.dshDimaTranscript{overflow-wrap:anywhere}.dshDimaTranscript>article{padding:14px 0;border-top:1px solid var(--dsw-alias-border-l2)}.dshDimaTranscript>article>strong{font-size:12px;color:var(--dsw-alias-label-secondary)}.dshDimaTranscript>article>p{margin-top:6px;line-height:1.6;white-space:pre-wrap}",
       ".dshRemoteProgressStatus{display:inline-flex;align-items:center;gap:8px}",
       '.dshRemoteProgress{display:flex;flex-direction:column;gap:8px;margin:12px 0;padding:12px 14px;border:1px solid var(--dsw-alias-border-l2);border-radius:10px;background:var(--dsw-alias-bg-layer-2)}.dshRemoteProgressHeader{display:flex;align-items:center;justify-content:space-between;gap:12px}.dshRemoteProgressHeader strong{font-size:13px;font-weight:600}.dshRemoteProgressHeader span{color:var(--dsw-alias-label-secondary);font-size:12px}.dshRemoteProgressBar{height:6px;overflow:hidden;border-radius:999px;background:var(--dsw-alias-bg-layer-3)}.dshRemoteProgressBar>span{display:block;width:100%;height:100%;border-radius:inherit;background:var(--dsw-alias-brand-primary);transform-origin:left center;transition:transform .22s ease-out}[dir="rtl"] .dshRemoteProgressBar>span{transform-origin:right center}.dshRemoteProgress p{margin:0;color:var(--dsw-alias-label-secondary);font-size:12px;line-height:1.45}.dshRemoteProgressRoute{font-weight:500}.dshRemoteProgressRoute .isActive{color:var(--dsw-alias-state-success-primary);font-weight:700}.dshRemoteProgressRouteArrow{color:var(--dsw-alias-label-tertiary)}@media(prefers-reduced-motion:reduce){.dshRemoteProgressBar>span{transition:none}}',
       '.dshRemoteBrowser{display:flex;flex-direction:column}.dshRemoteCrumbs{display:flex;align-items:center;gap:4px;overflow:auto;padding:2px 0 10px}.dshRemoteCrumbs>button{flex:0 0 auto;border:0;background:transparent;color:var(--dsw-alias-label-secondary);padding:5px 7px;border-radius:6px;cursor:pointer}.dshRemoteCrumbs>button:not(:last-child)::after{content:" /";color:var(--dsw-alias-label-tertiary)}.dshRemoteCrumbs>button:disabled{color:var(--dsw-alias-label-primary);font-weight:600}',
@@ -5420,6 +5471,114 @@ DSH Go \u626B\u7801\u6682\u4E0D\u652F\u6301\u591A\u53F0\u8BBE\u5907\u63A7\u5236\
     };
     return sync(), () => {
       timer !== void 0 && window.clearTimeout(timer), observer?.disconnect(), host?.remove();
+    };
+  }
+
+  // packages/plugin/src/client/dima-browser.ts
+  function createDimaBrowser(React) {
+    function useRead(control, endpoint, payload, revision) {
+      let [result, setResult] = React.useState(void 0);
+      return React.useEffect(() => {
+        let current = !0;
+        return setResult(void 0), control(endpoint, payload).then((value) => {
+          current && setResult({ value });
+        }, (error) => {
+          current && setResult({ error });
+        }), () => {
+          current = !1;
+        };
+      }, [control, endpoint, payload, revision]), result;
+    }
+    function Transcript(props) {
+      let { control, source, sessionId, branchId, revision, t } = props, request = React.useMemo(() => ({ ...source, sessionId, branchId }), [source, sessionId, branchId]), result = useRead(control, "dima.history", request, revision);
+      if (!result) return React.createElement("p", { role: "status" }, t("dimaLoading"));
+      if ("error" in result) return React.createElement("p", { className: "dshRemoteError", role: "alert" }, messageOf(result.error, t));
+      let { messages, truncated } = result.value;
+      return React.createElement(
+        "div",
+        { className: "dshDimaTranscript" },
+        messages.length === 0 ? React.createElement("p", null, t("dimaNoMessages")) : null,
+        messages.map((message, index) => React.createElement(
+          "article",
+          { key: index },
+          React.createElement("strong", null, message.role === "user" ? t("dimaUser") : "DimAgent"),
+          React.createElement("p", null, message.text)
+        )),
+        truncated ? React.createElement("p", { className: "dshRemoteHint", role: "status" }, t("dimaTruncated")) : null
+      );
+    }
+    return function(props) {
+      let { source, sourceName, control, t } = props, [catalogRevision, setCatalogRevision] = React.useState(0), [historyRevision, setHistoryRevision] = React.useState(0), [cwd, setCwd] = React.useState(void 0), [sessionId, setSessionId] = React.useState(void 0), [selectedBranch, setSelectedBranch] = React.useState(void 0), catalog = useRead(control, "dima.catalog", source, catalogRevision), workspace = (catalog && "value" in catalog ? catalog.value.workspaces : void 0)?.find((item) => item.cwd === cwd), session = workspace?.sessions.find((item) => item.sessionId === sessionId), branchId = selectedBranch !== void 0 && session?.branches.includes(selectedBranch) ? selectedBranch : session?.branches[0], page = React.useRef(null);
+      React.useEffect(() => {
+        page.current?.focus();
+      }, [cwd, sessionId]);
+      let title = t("dimaHistoryTitle", { source: sourceName }), goBack = () => {
+        session !== void 0 ? (setSessionId(void 0), setSelectedBranch(void 0)) : workspace !== void 0 ? (setCwd(void 0), setSessionId(void 0)) : props.onBack();
+      }, body = () => catalog ? "error" in catalog ? React.createElement("p", { className: "dshRemoteError", role: "alert" }, messageOf(catalog.error, t)) : workspace ? session ? branchId === void 0 ? React.createElement("p", null, t("dimaNoBranches")) : React.createElement(
+        React.Fragment,
+        null,
+        React.createElement(
+          "label",
+          { className: "dshDimaBranch" },
+          t("dimaBranch"),
+          React.createElement("select", {
+            value: branchId,
+            onChange: (event) => setSelectedBranch(event.target.value)
+          }, session.branches.map((id) => React.createElement("option", { key: id, value: id }, id)))
+        ),
+        React.createElement(Transcript, { key: JSON.stringify([session.sessionId, branchId]), control, source, sessionId: session.sessionId, branchId, revision: historyRevision, t })
+      ) : workspace.sessions.length === 0 ? React.createElement("p", null, t("dimaNoSessions")) : React.createElement("div", { className: "dshDimaList" }, workspace.sessions.map((item) => React.createElement("button", {
+        key: item.sessionId,
+        type: "button",
+        onClick: () => {
+          setSessionId(item.sessionId), setSelectedBranch(void 0);
+        }
+      }, item.title || item.sessionId))) : catalog.value.workspaces.length === 0 ? React.createElement("p", null, t("dimaNoWorkspaces")) : React.createElement("div", { className: "dshDimaList" }, catalog.value.workspaces.map((item) => React.createElement("button", {
+        key: item.cwd,
+        type: "button",
+        onClick: () => {
+          setCwd(item.cwd), setSessionId(void 0), setSelectedBranch(void 0);
+        }
+      }, item.cwd))) : React.createElement("p", { role: "status" }, t("dimaLoading"));
+      return React.createElement(
+        "section",
+        {
+          className: "dshRemotePage",
+          role: "dialog",
+          "aria-modal": !0,
+          "aria-label": title,
+          tabIndex: -1,
+          ref: page
+        },
+        React.createElement(
+          "header",
+          { className: "dshRemotePageHeader" },
+          React.createElement(
+            "div",
+            { className: "dshRemotePageIntro" },
+            React.createElement("strong", null, title),
+            React.createElement("p", null, workspace?.cwd ?? t("dimaWorkspaces"))
+          ),
+          React.createElement(
+            "div",
+            { className: "dshRemotePageActions" },
+            React.createElement("button", { type: "button", className: "dshRemotePageBack", onClick: goBack }, t("dimaBack")),
+            React.createElement("button", {
+              type: "button",
+              className: "dshRemotePageRefresh",
+              disabled: !catalog,
+              onClick: () => session && branchId !== void 0 ? setHistoryRevision((value) => value + 1) : setCatalogRevision((value) => value + 1)
+            }, t("refreshRemoteShort")),
+            React.createElement("button", { type: "button", className: "dshRemotePageClose", "aria-label": t("close"), onClick: props.onClose }, "\xD7")
+          )
+        ),
+        React.createElement(
+          "main",
+          { className: "dshRemotePageBody dshDimaBody" },
+          workspace === void 0 ? null : React.createElement("h3", null, session === void 0 ? t("dimaSessions") : session.title || session.sessionId),
+          body()
+        )
+      );
     };
   }
 
@@ -5557,7 +5716,7 @@ DSH Go \u626B\u7801\u6682\u4E0D\u652F\u6301\u591A\u53F0\u8BBE\u5907\u63A7\u5236\
   // packages/plugin/src/client/workspaces.ts
   var hostedServerUrl = "https://dsh.r2049.cn";
   function createRemoteWorkspaceAction(React, portal) {
-    let ServerNotice = createServerNotice(React), HostPairingPanel = createHostPairingPanel(React), RemoteProgressView = createRemoteProgressView(React);
+    let DimaBrowser = createDimaBrowser(React), ServerNotice = createServerNotice(React), HostPairingPanel = createHostPairingPanel(React), RemoteProgressView = createRemoteProgressView(React);
     function useFooterLane(wide) {
       let [form, setForm] = React.useState(wide ? "label" : "icon"), [node, setNode] = React.useState(null);
       return React.useEffect(() => {
@@ -5584,15 +5743,27 @@ DSH Go \u626B\u7801\u6682\u4E0D\u652F\u6301\u591A\u53F0\u8BBE\u5907\u63A7\u5236\
           if (typeof code == "string") return connectionErrorMessage(code, translate);
         }
         return messageOf(reason, translate);
-      }, [open, setOpen] = React.useState(!1), [status, setStatus] = React.useState(void 0), [devices, setDevices] = React.useState([]), [discoveryUnavailable, setDiscoveryUnavailable] = React.useState(!1), [selectedHost, setSelectedHost] = React.useState(void 0), [connectingHost, setConnectingHost] = React.useState(void 0), [workspaces, setWorkspaces] = React.useState([]), [codexWorkspaces, setCodexWorkspaces] = React.useState([]), [cursorWorkspaces, setCursorWorkspaces] = React.useState([]), [antigravityWorkspaces, setAntigravityWorkspaces] = React.useState([]), [piWorkspaces, setPiWorkspaces] = React.useState([]), [opencodeWorkspaces, setOpencodeWorkspaces] = React.useState([]), [claudeWorkspaces, setClaudeWorkspaces] = React.useState([]), [hermesWorkspaces, setHermesWorkspaces] = React.useState([]), [customAcpWorkspaces, setCustomAcpWorkspaces] = React.useState({}), [workspaceBackend, setWorkspaceBackend] = React.useState("harness"), [codexWorkspaceId, setCodexWorkspaceId] = React.useState(void 0), [cursorWorkspaceId, setCursorWorkspaceId] = React.useState(void 0), [antigravityWorkspaceId, setAntigravityWorkspaceId] = React.useState(void 0), [piWorkspaceId, setPiWorkspaceId] = React.useState(void 0), [opencodeWorkspaceId, setOpencodeWorkspaceId] = React.useState(void 0), [claudeWorkspaceId, setClaudeWorkspaceId] = React.useState(void 0), [hermesWorkspaceId, setHermesWorkspaceId] = React.useState(void 0), [customAcpWorkspaceIds, setCustomAcpWorkspaceIds] = React.useState({}), [directory, setDirectory] = React.useState(void 0), [path, setPath] = React.useState(""), [addingWorkspace, setAddingWorkspace] = React.useState(!1), [showAllWorkspaces, setShowAllWorkspaces] = React.useState(!1), [showAllCodexWorkspaces, setShowAllCodexWorkspaces] = React.useState(!1), [devicesOpen, setDevicesOpen] = React.useState(!1), [upgradePhase, setUpgradePhase] = React.useState("idle"), [upgradeError, setUpgradeError] = React.useState(void 0), [showAllCursorWorkspaces, setShowAllCursorWorkspaces] = React.useState(!1), [showAllAntigravityWorkspaces, setShowAllAntigravityWorkspaces] = React.useState(!1), [showAllPiWorkspaces, setShowAllPiWorkspaces] = React.useState(!1), [showAllOpencodeWorkspaces, setShowAllOpencodeWorkspaces] = React.useState(!1), [showAllClaudeWorkspaces, setShowAllClaudeWorkspaces] = React.useState(!1), [showAllHermesWorkspaces, setShowAllHermesWorkspaces] = React.useState(!1), [showAllCustomAcpWorkspaces, setShowAllCustomAcpWorkspaces] = React.useState({}), workspaceListId = "dsh-remote-workspace-list", codexWorkspaceHeadingId = "dsh-remote-codex-workspace-heading", codexWorkspaceListId = "dsh-remote-codex-workspace-list", cursorWorkspaceHeadingId = "dsh-remote-cursor-workspace-heading", cursorWorkspaceListId = "dsh-remote-cursor-workspace-list", antigravityWorkspaceHeadingId = "dsh-remote-antigravity-workspace-heading", piWorkspaceHeadingId = "dsh-remote-pi-workspace-heading", opencodeWorkspaceHeadingId = "dsh-remote-opencode-workspace-heading", claudeWorkspaceHeadingId = "dsh-remote-claude-workspace-heading", hermesWorkspaceHeadingId = "dsh-remote-hermes-workspace-heading", antigravityWorkspaceListId = "dsh-remote-antigravity-workspace-list", piWorkspaceListId = "dsh-remote-pi-workspace-list", opencodeWorkspaceListId = "dsh-remote-opencode-workspace-list", claudeWorkspaceListId = "dsh-remote-claude-workspace-list", hermesWorkspaceListId = "dsh-remote-hermes-workspace-list", [busy, setBusy] = React.useState(!1), [refreshingHosts, setRefreshingHosts] = React.useState(!1), [needsAuthorization, setNeedsAuthorization] = React.useState(void 0), [email, setEmail] = React.useState(""), [password, setPassword] = React.useState(""), [loginServerUrl, setLoginServerUrl] = React.useState(hostedServerUrl), [editingServer, setEditingServer] = React.useState(!1), [savingServer, setSavingServer] = React.useState(!1), serverDirty = loginServerUrl.trim() !== (status?.serverUrl ?? ""), [loginMethod, setLoginMethod] = React.useState("password"), loginMethodManuallySelected = React.useRef(!1), [oauthProviders, setOAuthProviders] = React.useState([]), [providersLoading, setProvidersLoading] = React.useState(!1), [providersFailed, setProvidersFailed] = React.useState(!1), [pairingServerUrl, setPairingServerUrl] = React.useState(void 0), pairingAvailable = pairingServerUrl !== void 0 && pairingServerUrl === status?.serverUrl, [providerReload, setProviderReload] = React.useState(0), providerRequestRun = React.useRef(0), [qrSession, setQrSession] = React.useState(void 0), [qrImage, setQrImage] = React.useState(void 0), [qrExpired, setQrExpired] = React.useState(!1), [hostEmail, setHostEmail] = React.useState(""), [hostPassword, setHostPassword] = React.useState(""), [hostRegistrationCode, setHostRegistrationCode] = React.useState(""), [progress, setProgress] = React.useState(void 0), progressRun = React.useRef(0), qrFlowRun = React.useRef(0), pageRef = React.useRef(null), [notice, setNotice] = React.useState(void 0), [error, setError] = React.useState(void 0), [sidebarEntry, setSidebarEntry] = React.useState(() => props.sidebarEntry.read());
+      }, [open, setOpen] = React.useState(!1), [dimaSource, setDimaSource] = React.useState(void 0), [localDimaAvailable, setLocalDimaAvailable] = React.useState(!1), [status, setStatus] = React.useState(void 0), [devices, setDevices] = React.useState([]), [discoveryUnavailable, setDiscoveryUnavailable] = React.useState(!1), [selectedHost, setSelectedHost] = React.useState(void 0), [connectingHost, setConnectingHost] = React.useState(void 0), [workspaces, setWorkspaces] = React.useState([]), [codexWorkspaces, setCodexWorkspaces] = React.useState([]), [cursorWorkspaces, setCursorWorkspaces] = React.useState([]), [antigravityWorkspaces, setAntigravityWorkspaces] = React.useState([]), [piWorkspaces, setPiWorkspaces] = React.useState([]), [opencodeWorkspaces, setOpencodeWorkspaces] = React.useState([]), [claudeWorkspaces, setClaudeWorkspaces] = React.useState([]), [hermesWorkspaces, setHermesWorkspaces] = React.useState([]), [customAcpWorkspaces, setCustomAcpWorkspaces] = React.useState({}), [workspaceBackend, setWorkspaceBackend] = React.useState("harness"), [codexWorkspaceId, setCodexWorkspaceId] = React.useState(void 0), [cursorWorkspaceId, setCursorWorkspaceId] = React.useState(void 0), [antigravityWorkspaceId, setAntigravityWorkspaceId] = React.useState(void 0), [piWorkspaceId, setPiWorkspaceId] = React.useState(void 0), [opencodeWorkspaceId, setOpencodeWorkspaceId] = React.useState(void 0), [claudeWorkspaceId, setClaudeWorkspaceId] = React.useState(void 0), [hermesWorkspaceId, setHermesWorkspaceId] = React.useState(void 0), [customAcpWorkspaceIds, setCustomAcpWorkspaceIds] = React.useState({}), [directory, setDirectory] = React.useState(void 0), [path, setPath] = React.useState(""), [addingWorkspace, setAddingWorkspace] = React.useState(!1), [showAllWorkspaces, setShowAllWorkspaces] = React.useState(!1), [showAllCodexWorkspaces, setShowAllCodexWorkspaces] = React.useState(!1), [devicesOpen, setDevicesOpen] = React.useState(!1), [upgradePhase, setUpgradePhase] = React.useState("idle"), [upgradeError, setUpgradeError] = React.useState(void 0), [showAllCursorWorkspaces, setShowAllCursorWorkspaces] = React.useState(!1), [showAllAntigravityWorkspaces, setShowAllAntigravityWorkspaces] = React.useState(!1), [showAllPiWorkspaces, setShowAllPiWorkspaces] = React.useState(!1), [showAllOpencodeWorkspaces, setShowAllOpencodeWorkspaces] = React.useState(!1), [showAllClaudeWorkspaces, setShowAllClaudeWorkspaces] = React.useState(!1), [showAllHermesWorkspaces, setShowAllHermesWorkspaces] = React.useState(!1), [showAllCustomAcpWorkspaces, setShowAllCustomAcpWorkspaces] = React.useState({}), workspaceListId = "dsh-remote-workspace-list", codexWorkspaceHeadingId = "dsh-remote-codex-workspace-heading", codexWorkspaceListId = "dsh-remote-codex-workspace-list", cursorWorkspaceHeadingId = "dsh-remote-cursor-workspace-heading", cursorWorkspaceListId = "dsh-remote-cursor-workspace-list", antigravityWorkspaceHeadingId = "dsh-remote-antigravity-workspace-heading", piWorkspaceHeadingId = "dsh-remote-pi-workspace-heading", opencodeWorkspaceHeadingId = "dsh-remote-opencode-workspace-heading", claudeWorkspaceHeadingId = "dsh-remote-claude-workspace-heading", hermesWorkspaceHeadingId = "dsh-remote-hermes-workspace-heading", antigravityWorkspaceListId = "dsh-remote-antigravity-workspace-list", piWorkspaceListId = "dsh-remote-pi-workspace-list", opencodeWorkspaceListId = "dsh-remote-opencode-workspace-list", claudeWorkspaceListId = "dsh-remote-claude-workspace-list", hermesWorkspaceListId = "dsh-remote-hermes-workspace-list", [busy, setBusy] = React.useState(!1), [refreshingHosts, setRefreshingHosts] = React.useState(!1), [needsAuthorization, setNeedsAuthorization] = React.useState(void 0), [email, setEmail] = React.useState(""), [password, setPassword] = React.useState(""), [loginServerUrl, setLoginServerUrl] = React.useState(hostedServerUrl), [editingServer, setEditingServer] = React.useState(!1), [savingServer, setSavingServer] = React.useState(!1), serverDirty = loginServerUrl.trim() !== (status?.serverUrl ?? ""), [loginMethod, setLoginMethod] = React.useState("password"), loginMethodManuallySelected = React.useRef(!1), [oauthProviders, setOAuthProviders] = React.useState([]), [providersLoading, setProvidersLoading] = React.useState(!1), [providersFailed, setProvidersFailed] = React.useState(!1), [pairingServerUrl, setPairingServerUrl] = React.useState(void 0), pairingAvailable = pairingServerUrl !== void 0 && pairingServerUrl === status?.serverUrl, [providerReload, setProviderReload] = React.useState(0), providerRequestRun = React.useRef(0), [qrSession, setQrSession] = React.useState(void 0), [qrImage, setQrImage] = React.useState(void 0), [qrExpired, setQrExpired] = React.useState(!1), [hostEmail, setHostEmail] = React.useState(""), [hostPassword, setHostPassword] = React.useState(""), [hostRegistrationCode, setHostRegistrationCode] = React.useState(""), [progress, setProgress] = React.useState(void 0), progressRun = React.useRef(0), qrFlowRun = React.useRef(0), pageRef = React.useRef(null), [notice, setNotice] = React.useState(void 0), [error, setError] = React.useState(void 0), [sidebarEntry, setSidebarEntry] = React.useState(() => props.sidebarEntry.read());
       React.useEffect(
         () => props.sidebarEntry.subscribe(() => setSidebarEntry(props.sidebarEntry.read())),
         [props.sidebarEntry]
       ), React.useEffect(() => {
         props.control("settings.get").then((view) => props.sidebarEntry.publish(view.config.sidebar?.entry ?? "standard")).catch(() => {
         });
-      }, [props.control, props.sidebarEntry]), React.useEffect(() => {
-        open || (setDevicesOpen(!1), qrFlowRun.current += 1, setBusy(!1));
+      }, [props.control, props.sidebarEntry]);
+      let probeLocalDima = open && selectedHost === void 0 && status !== void 0 && !status.controlUnavailable;
+      React.useEffect(() => {
+        if (setLocalDimaAvailable(!1), !probeLocalDima) return;
+        let current = !0;
+        return props.control("dima.probe", { target: "local" }).then((available) => {
+          current && setLocalDimaAvailable(available === !0);
+        }).catch((reason) => {
+          current && setError(messageOf(reason, t));
+        }), () => {
+          current = !1;
+        };
+      }, [probeLocalDima, props.control, t]), React.useEffect(() => {
+        open || (setDimaSource(void 0), setDevicesOpen(!1), qrFlowRun.current += 1, setBusy(!1));
       }, [open]), React.useEffect(() => {
         if (!open) return;
         let frame = window.requestAnimationFrame(() => pageRef.current?.focus());
@@ -5741,7 +5912,7 @@ DSH Go \u626B\u7801\u6682\u4E0D\u652F\u6301\u591A\u53F0\u8BBE\u5907\u63A7\u5236\
                 props.control("hermes.workspaces.list", { targetDeviceId: host.deviceId }).catch(() => []),
                 props.control("status").catch(() => {
                 })
-              ]), builtinIds = /* @__PURE__ */ new Set(["harness", "codex", "cursor", "antigravity", "pi", "opencode", "claude", "hermes"]), customTypes = (nextStatus?.remoteFeatures?.workspaceTypes ?? []).filter((w) => w.available && !builtinIds.has(w.id)), nextCustomEntries = await Promise.all(customTypes.map(async (wt) => {
+              ]), builtinIds = /* @__PURE__ */ new Set(["harness", "codex", "cursor", "antigravity", "pi", "opencode", "claude", "hermes"]), customTypes = (nextStatus?.remoteFeatures?.workspaceTypes ?? []).filter((w) => w.available && w.capability === `agent.acp.${w.id}.v1` && !builtinIds.has(w.id)), nextCustomEntries = await Promise.all(customTypes.map(async (wt) => {
                 let items = await props.control("acp.workspaces.list", { targetDeviceId: host.deviceId, backend: wt.id }).catch(() => []);
                 return [wt.id, items];
               }));
@@ -5839,7 +6010,7 @@ DSH Go \u626B\u7801\u6682\u4E0D\u652F\u6301\u591A\u53F0\u8BBE\u5907\u63A7\u5236\
       React.useEffect(() => props.subscribeOpen(() => {
         show();
       }), [props.subscribeOpen, show]), React.useEffect(() => props.statusFeed.subscribe((next) => {
-        setStatus(next), next.host?.pairingHostOnly && (setNeedsAuthorization(!next.host.authorized || next.host.accountRequired), setDevices([]), setSelectedHost(void 0), setConnectingHost(void 0)), next.host?.online && setDiscoveryUnavailable(!1);
+        setStatus(next), setDimaSource((source) => source?.target === "remote" && source.targetDeviceId !== next.connectedTargetDeviceId ? void 0 : source), next.host?.pairingHostOnly && (setNeedsAuthorization(!next.host.authorized || next.host.accountRequired), setDevices([]), setSelectedHost(void 0), setConnectingHost(void 0)), next.host?.online && setDiscoveryUnavailable(!1);
       }), [props.statusFeed]);
       let chooseAnotherHost = () => {
         setSelectedHost(void 0), setWorkspaces([]), setCodexWorkspaces([]), setCursorWorkspaces([]), setAntigravityWorkspaces([]), setPiWorkspaces([]), setOpencodeWorkspaces([]), setClaudeWorkspaces([]), setHermesWorkspaces([]), setShowAllWorkspaces(!1), setShowAllCodexWorkspaces(!1), setShowAllCursorWorkspaces(!1), setShowAllAntigravityWorkspaces(!1), setShowAllPiWorkspaces(!1), setShowAllOpencodeWorkspaces(!1), setShowAllClaudeWorkspaces(!1), setShowAllHermesWorkspaces(!1), setWorkspaceBackend("harness"), setCodexWorkspaceId(void 0), setCursorWorkspaceId(void 0), setAntigravityWorkspaceId(void 0), setPiWorkspaceId(void 0), setOpencodeWorkspaceId(void 0), setClaudeWorkspaceId(void 0), setHermesWorkspaceId(void 0), setDirectory(void 0), setPath(""), setAddingWorkspace(!1), setError(void 0);
@@ -5945,7 +6116,7 @@ DSH Go \u626B\u7801\u6682\u4E0D\u652F\u6301\u591A\u53F0\u8BBE\u5907\u63A7\u5236\
             setError(messageOf(reason, t)), setBusy(!1);
           }
         }
-      }, reauth = status?.clientAuthRequired === !0, remoteLabel = reauth ? t("clientSignInAgain") : status?.mode === "remote" ? t("activeRemote", { name: status.target?.name ?? t("host") }) : t("remoteEntry"), remoteActionLabel = !reauth && status?.mode === "remote" ? `${remoteLabel} \xB7 ${t("exitRemote")}` : remoteLabel, visibleWorkspaces = showAllWorkspaces ? workspaces : workspaces.slice(0, 3), visibleCodexWorkspaces = showAllCodexWorkspaces ? codexWorkspaces : codexWorkspaces.slice(0, 3), visibleCursorWorkspaces = showAllCursorWorkspaces ? cursorWorkspaces : cursorWorkspaces.slice(0, 3), visibleAntigravityWorkspaces = showAllAntigravityWorkspaces ? antigravityWorkspaces : antigravityWorkspaces.slice(0, 3), visiblePiWorkspaces = showAllPiWorkspaces ? piWorkspaces : piWorkspaces.slice(0, 3), visibleOpencodeWorkspaces = showAllOpencodeWorkspaces ? opencodeWorkspaces : opencodeWorkspaces.slice(0, 3), visibleClaudeWorkspaces = showAllClaudeWorkspaces ? claudeWorkspaces : claudeWorkspaces.slice(0, 3), visibleHermesWorkspaces = showAllHermesWorkspaces ? hermesWorkspaces : hermesWorkspaces.slice(0, 3), codexAvailable = status?.remoteFeatures?.codex === !0, cursorAvailable = status?.remoteFeatures?.cursor === !0, antigravityAvailable = status?.remoteFeatures?.antigravity === !0, piAvailable = status?.remoteFeatures?.pi === !0, opencodeAvailable = status?.remoteFeatures?.opencode === !0, claudeAvailable = status?.remoteFeatures?.claude === !0, hermesAvailable = status?.remoteFeatures?.hermes === !0, customAcpBackends = (status?.remoteFeatures?.workspaceTypes ?? []).filter((wt) => wt.available && !["harness", "codex", "cursor", "antigravity", "pi", "opencode", "claude", "hermes"].includes(wt.id)), rawUpdate = status?.update, updateInfo = rawUpdate !== void 0 && typeof rawUpdate.currentVersion == "string" && typeof rawUpdate.latestVersion == "string" ? rawUpdate : void 0, localUpdateAvailable = updateInfo !== void 0 && compareVersions(updateInfo.currentVersion, updateInfo.latestVersion) < 0, updateNotice = updateInfo !== void 0 && localUpdateAvailable ? t("updateAvailable", { latest: updateInfo.latestVersion, current: updateInfo.currentVersion }) : void 0, releasesUrl = "https://github.com/liguobao/ds-harness-remote/releases", canUpgradeInPlace = updateInfo?.upgrade === "ready", startLocalUpgrade = async () => {
+      }, reauth = status?.clientAuthRequired === !0, remoteLabel = reauth ? t("clientSignInAgain") : status?.mode === "remote" ? t("activeRemote", { name: status.target?.name ?? t("host") }) : t("remoteEntry"), remoteActionLabel = !reauth && status?.mode === "remote" ? `${remoteLabel} \xB7 ${t("exitRemote")}` : remoteLabel, visibleWorkspaces = showAllWorkspaces ? workspaces : workspaces.slice(0, 3), visibleCodexWorkspaces = showAllCodexWorkspaces ? codexWorkspaces : codexWorkspaces.slice(0, 3), visibleCursorWorkspaces = showAllCursorWorkspaces ? cursorWorkspaces : cursorWorkspaces.slice(0, 3), visibleAntigravityWorkspaces = showAllAntigravityWorkspaces ? antigravityWorkspaces : antigravityWorkspaces.slice(0, 3), visiblePiWorkspaces = showAllPiWorkspaces ? piWorkspaces : piWorkspaces.slice(0, 3), visibleOpencodeWorkspaces = showAllOpencodeWorkspaces ? opencodeWorkspaces : opencodeWorkspaces.slice(0, 3), visibleClaudeWorkspaces = showAllClaudeWorkspaces ? claudeWorkspaces : claudeWorkspaces.slice(0, 3), visibleHermesWorkspaces = showAllHermesWorkspaces ? hermesWorkspaces : hermesWorkspaces.slice(0, 3), codexAvailable = status?.remoteFeatures?.codex === !0, cursorAvailable = status?.remoteFeatures?.cursor === !0, antigravityAvailable = status?.remoteFeatures?.antigravity === !0, piAvailable = status?.remoteFeatures?.pi === !0, opencodeAvailable = status?.remoteFeatures?.opencode === !0, claudeAvailable = status?.remoteFeatures?.claude === !0, hermesAvailable = status?.remoteFeatures?.hermes === !0, customAcpBackends = (status?.remoteFeatures?.workspaceTypes ?? []).filter((wt) => wt.available && wt.capability === `agent.acp.${wt.id}.v1` && !["harness", "codex", "cursor", "antigravity", "pi", "opencode", "claude", "hermes"].includes(wt.id)), rawUpdate = status?.update, updateInfo = rawUpdate !== void 0 && typeof rawUpdate.currentVersion == "string" && typeof rawUpdate.latestVersion == "string" ? rawUpdate : void 0, localUpdateAvailable = updateInfo !== void 0 && compareVersions(updateInfo.currentVersion, updateInfo.latestVersion) < 0, updateNotice = updateInfo !== void 0 && localUpdateAvailable ? t("updateAvailable", { latest: updateInfo.latestVersion, current: updateInfo.currentVersion }) : void 0, releasesUrl = "https://github.com/liguobao/ds-harness-remote/releases", canUpgradeInPlace = updateInfo?.upgrade === "ready", startLocalUpgrade = async () => {
         if (!(!canUpgradeInPlace || updateInfo === void 0)) {
           setUpgradePhase("running"), setUpgradeError(void 0);
           try {
@@ -6105,7 +6276,14 @@ DSH Go \u626B\u7801\u6682\u4E0D\u652F\u6301\u591A\u53F0\u8BBE\u5907\u63A7\u5236\
           onMouseDown: (event) => {
             event.target === event.currentTarget && setOpen(!1);
           }
-        }, React.createElement(
+        }, dimaSource !== void 0 ? React.createElement(DimaBrowser, {
+          source: dimaSource,
+          sourceName: dimaSource.target === "local" ? t("connectionRouteCurrentDevice") : selectedHost?.name ?? t("host"),
+          control: props.control,
+          t,
+          onBack: () => setDimaSource(void 0),
+          onClose: () => setOpen(!1)
+        }) : React.createElement(
           "section",
           {
             className: `dshRemotePage${selectedHost === void 0 ? "" : " hasSelectedHost"}`,
@@ -6158,6 +6336,11 @@ DSH Go \u626B\u7801\u6682\u4E0D\u652F\u6301\u591A\u53F0\u8BBE\u5907\u63A7\u5236\
           React.createElement(
             "main",
             { className: "dshRemotePageBody" },
+            selectedHost === void 0 && localDimaAvailable ? React.createElement("button", {
+              type: "button",
+              className: "dshDimaEntry",
+              onClick: () => setDimaSource({ target: "local" })
+            }, t("dimaHistoryTitle", { source: t("connectionRouteCurrentDevice") })) : null,
             status?.mode === "remote" ? React.createElement("button", {
               type: "button",
               className: "dshRemoteLocalLink",
@@ -6637,6 +6820,12 @@ DSH Go \u626B\u7801\u6682\u4E0D\u652F\u6301\u591A\u53F0\u8BBE\u5907\u63A7\u5236\
                         }, React.createElement("span", { "aria-hidden": !0 }, "\u2026"))
                       )
                     ),
+                    status?.remoteFeatures?.dima && status.connectedTargetDeviceId === selectedHost.deviceId ? React.createElement("button", {
+                      type: "button",
+                      className: "dshDimaEntry",
+                      disabled: busy,
+                      onClick: () => setDimaSource({ target: "remote", targetDeviceId: selectedHost.deviceId })
+                    }, t("dimaHistoryTitle", { source: selectedHost.name })) : null,
                     codexAvailable ? React.createElement(
                       "section",
                       { className: "dshRemoteCodexWorkspaceGroup" },

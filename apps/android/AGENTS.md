@@ -36,7 +36,7 @@
 ## 会话架构、离线草稿、动效与多语言
 
 - **数据面与附件**：
-  - 仅接官方 Typert、`codex.app.*`、`agent.acp.*` 与 `plugin.route.call`（已移除早期 ApiProxy）。
+  - 仅接官方 Typert、`codex.app.*`、`dima.app.*`（只读目录与分支历史）、`agent.acp.*` 与 `plugin.route.call`（已移除早期 ApiProxy）。
   - Harness 图片发送完整 `ImageAttachmentRef`；Markdown 工作区图片仅复用授权 `workspaceFiles` 内存预览（不读手机本地路径，外部 HTTP 图不自动联网）。
   - 活动坞（待办/目标/`job/list|follow`）按当前 `sessionId` 只读订阅并在切换时取消。
 - **聊天模块与离线草稿门禁**：

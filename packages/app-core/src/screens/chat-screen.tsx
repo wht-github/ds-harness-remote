@@ -278,6 +278,7 @@ export function ChatScreen({
   onOpenWorkspaces,
   onOpenDeviceInfo,
   onOpenHostSwitcher,
+  onOpenDima,
   onOpenAttentionInbox,
   onOpenSettings,
   onOpenAbout,
@@ -295,6 +296,7 @@ export function ChatScreen({
   onOpenWorkspaces?: (focusWorkspaceKey?: string) => void
   onOpenDeviceInfo?: () => void
   onOpenHostSwitcher?: () => void
+  onOpenDima?: () => void
   onOpenAttentionInbox?: () => void
   onOpenSettings?: () => void
   onOpenAbout?: () => void
@@ -597,6 +599,7 @@ export function ChatScreen({
       onOpenPlugins={pluginsAvailable ? handleDrawerOpenPlugins : undefined}
       onOpenHostSwitcher={hasOpenHostSwitcher ? handleDrawerOpenHostSwitcher : undefined}
       onOpenAbout={hasOpenAbout ? stableOnOpenAbout : undefined}
+      onOpenDima={onOpenDima}
       onOpenAttentionInbox={openAttentionInbox}
       onOpenSettings={handleDrawerOpenSettings}
       onSelect={handleDrawerSelect}

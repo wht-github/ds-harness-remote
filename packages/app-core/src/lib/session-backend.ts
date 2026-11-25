@@ -1,4 +1,5 @@
 import type { AgentBackend } from '../types'
+import { isAcpManagedBackend } from './workspace-key'
 
 /** Session ids carry their backend prefix; an unprefixed id is a Harness session. */
 const PREFIXES: ReadonlyArray<[string, AgentBackend]> = [
@@ -14,7 +15,7 @@ const PREFIXES: ReadonlyArray<[string, AgentBackend]> = [
 const REGISTERED_ACP_BACKENDS = new Set<string>()
 
 export function registerAcpBackendId(backend: string): void {
-  if (backend && backend !== 'harness' && backend !== 'codex') {
+  if (backend && isAcpManagedBackend(backend)) {
     REGISTERED_ACP_BACKENDS.add(backend)
   }
 }

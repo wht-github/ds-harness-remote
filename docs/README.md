@@ -17,6 +17,7 @@
 
 - [ACP 后端接入与实现](acp-remote.md)：安装配置、后端差异、OpenCode 归档、gateway 和新增 adapter。
 - [Codex 技术说明](codex-remote.md)：App Server、Project/Thread authority 和内存投影。
+- [DimAgent 原生 App Server](protocol.md#dimagent-原生-app-server) 提供 DSH Web 与 Android 的工作区、分支与只读历史。
 - [Intelligent UI](intelligent-ui-android.md)：可选离线 renderer 的构建和交互边界。
 - [设计文档](design/README.md)：产品边界、界面规则与专项实现设计。
 

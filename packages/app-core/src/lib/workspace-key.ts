@@ -1,6 +1,7 @@
+import { DIMA_WORKSPACE_TYPE } from '@dsh-remote/protocol'
 import type { AgentBackend, RemoteSession, WorkspaceView } from '../types'
 
-export type AcpManagedBackend = Exclude<AgentBackend, 'harness' | 'codex'>
+export type AcpManagedBackend = Exclude<AgentBackend, 'harness' | 'codex' | typeof DIMA_WORKSPACE_TYPE>
 
 export interface AcpCatalogFilterOptions {
   deletedKeys?: ReadonlySet<string>
@@ -8,12 +9,12 @@ export interface AcpCatalogFilterOptions {
 }
 
 export function isAcpManagedBackend(backend?: AgentBackend): backend is AcpManagedBackend {
-  return backend !== undefined && backend !== 'harness' && backend !== 'codex'
+  return backend !== undefined && backend !== 'harness' && backend !== 'codex' && backend !== DIMA_WORKSPACE_TYPE
 }
 
-/** Harness and ACP workspaces support manage actions; CodeX projects are host-derived and read-only. */
+/** Only native Harness and ACP workspaces expose management actions. */
 export function canManageWorkspace(target?: { backend?: AgentBackend }): boolean {
-  return target !== undefined && target.backend !== 'codex'
+  return target !== undefined && target.backend !== 'codex' && target.backend !== DIMA_WORKSPACE_TYPE
 }
 
 function isWindowsWorkspacePath(path: string): boolean {

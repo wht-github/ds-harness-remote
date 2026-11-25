@@ -14,6 +14,7 @@ export interface Config {
     maxDelayMs?: number
     jitter?: number
   }
+  dima?: { enabled?: boolean }
   codex?: {
     enabled?: boolean
     binary?: string

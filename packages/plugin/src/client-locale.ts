@@ -2,6 +2,18 @@
 export const localeNamespace = 'ds-harness-remote'
 
 export const en = {
+  dimaHistoryTitle: 'DimAgent history · {source}',
+  dimaWorkspaces: 'Workspaces',
+  dimaSessions: 'Sessions',
+  dimaBranch: 'Branch',
+  dimaBack: 'Back',
+  dimaLoading: 'Loading…',
+  dimaNoWorkspaces: 'No DimAgent workspaces.',
+  dimaNoSessions: 'This workspace has no sessions.',
+  dimaNoBranches: 'This session has no branches.',
+  dimaNoMessages: 'This branch has no messages.',
+  dimaUser: 'User',
+  dimaTruncated: 'Showing part of this branch’s history.',
   serverSavedLive: 'Server address saved and applied.',
   saveServerBeforeLogin: 'Save the Server address before continuing sign-in or pairing.',
   pairingLoginTab: 'DSH Go',
@@ -402,6 +414,18 @@ export const en = {
 } as const
 
 export const zh: Record<keyof typeof en, string> = {
+  dimaHistoryTitle: 'DimAgent 会话历史 · {source}',
+  dimaWorkspaces: '工作区',
+  dimaSessions: '会话',
+  dimaBranch: '分支',
+  dimaBack: '返回',
+  dimaLoading: '正在读取…',
+  dimaNoWorkspaces: '没有 DimAgent 工作区。',
+  dimaNoSessions: '这个工作区还没有会话。',
+  dimaNoBranches: '这个会话没有可查看的分支。',
+  dimaNoMessages: '这个分支还没有消息。',
+  dimaUser: '用户',
+  dimaTruncated: '仅显示此分支的部分历史。',
   serverSavedLive: '服务器地址已保存并生效。',
   saveServerBeforeLogin: '请先保存服务器地址，再继续登录或配对。',
   pairingLoginTab: 'DSH Go',
@@ -802,6 +826,18 @@ export const zh: Record<keyof typeof en, string> = {
 }
 
 export const ru: Record<keyof typeof en, string> = {
+  dimaHistoryTitle: 'История DimAgent · {source}',
+  dimaWorkspaces: 'Рабочие области',
+  dimaSessions: 'Сессии',
+  dimaBranch: 'Ветка',
+  dimaBack: 'Назад',
+  dimaLoading: 'Загрузка…',
+  dimaNoWorkspaces: 'Нет рабочих областей DimAgent.',
+  dimaNoSessions: 'В этой рабочей области нет сессий.',
+  dimaNoBranches: 'В этой сессии нет веток.',
+  dimaNoMessages: 'В этой ветке нет сообщений.',
+  dimaUser: 'Пользователь',
+  dimaTruncated: 'Показана часть истории этой ветки.',
   serverSavedLive: 'Адрес сервера сохранён и применён.',
   saveServerBeforeLogin: 'Сохраните адрес сервера, прежде чем продолжить вход или сопряжение.',
   pairingLoginTab: 'DSH Go',
@@ -1202,6 +1238,18 @@ export const ru: Record<keyof typeof en, string> = {
 }
 
 export const uk: Record<keyof typeof en, string> = {
+  dimaHistoryTitle: 'Історія DimAgent · {source}',
+  dimaWorkspaces: 'Робочі простори',
+  dimaSessions: 'Сесії',
+  dimaBranch: 'Гілка',
+  dimaBack: 'Назад',
+  dimaLoading: 'Завантаження…',
+  dimaNoWorkspaces: 'Немає робочих просторів DimAgent.',
+  dimaNoSessions: 'У цьому робочому просторі немає сесій.',
+  dimaNoBranches: 'У цій сесії немає гілок.',
+  dimaNoMessages: 'У цій гілці немає повідомлень.',
+  dimaUser: 'Користувач',
+  dimaTruncated: 'Показано частину історії цієї гілки.',
   serverSavedLive: 'Адресу сервера збережено й застосовано.',
   saveServerBeforeLogin: 'Збережіть адресу сервера, перш ніж продовжити вхід або спарювання.',
   pairingLoginTab: 'DSH Go',

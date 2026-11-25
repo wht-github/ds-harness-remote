@@ -1,4 +1,14 @@
 const zhCN = {
+  dima: {
+    readOnly: '只读会话历史',
+    emptySessions: '此工作区还没有会话。',
+    emptyBranches: '此会话没有可浏览的分支。',
+    chooseBranch: '选择分支',
+    emptyHistory: '此分支还没有消息。',
+    truncated: '主机仅返回了部分历史记录。',
+    unavailable: '此连接上的 DimAgent 历史记录不可用。',
+    invalidResponse: '主机返回的 DimAgent 数据与请求不符。',
+  },
   bots: {
     btw: "旁问",
     btwHint: "输入 /btw 提问，不打断任务，也不加入 Bot 上下文。",

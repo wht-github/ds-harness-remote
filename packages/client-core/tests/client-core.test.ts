@@ -317,6 +317,31 @@ describe('RemoteClientCore', () => {
 })
 
 describe('Remote Host feature probing', () => {
+  it('recognizes a standalone DimAgent workspace only with its native capability', async () => {
+    const native = 'dima.appserver.v1'
+    const workspace = { id: 'dima.appserver', name: 'DimAgent', capability: native, available: true }
+    const scenarios = [
+      { name: 'mobile supports the native workspace', declaration: workspace, allowStandaloneDima: true, accepted: true },
+      { name: 'legacy caller requires a Harness transport', declaration: workspace, accepted: false },
+      { name: 'native workspace is unavailable', declaration: { ...workspace, available: false }, allowStandaloneDima: true, accepted: false },
+      { name: 'workspace advertises an ACP capability', declaration: { ...workspace, capability: 'agent.acp.dima.v1' }, allowStandaloneDima: true, accepted: false },
+    ]
+    await runScenarios(scenarios.map(({ name, declaration, allowStandaloneDima, accepted }) => ({ name, run: async () => {
+      const transport = new LoopbackTransport()
+      const client = new RemoteClientCore(transport)
+      await client.connect()
+      const probing = probeRemoteHostFeatures(client, undefined, allowStandaloneDima ? { allowStandaloneDima } : undefined)
+      const request = JSON.parse(new TextDecoder().decode(transport.sent[0]!))
+      transport.push(encodeMessage(createRpcResponse(request.id, { capabilities: [native], workspaceTypes: [declaration] })))
+      if (accepted) {
+        await expect(probing).resolves.toMatchObject({ remoteGateway: false, capabilities: [native], workspaceTypes: [workspace] })
+      } else {
+        await expect(probing).rejects.toMatchObject({ code: 'FEATURE_NOT_SUPPORTED' })
+      }
+      await client.close()
+    } })))
+  })
+
   it('negotiates compatible Typert session generations', async () => {
     await runScenarios(
       [

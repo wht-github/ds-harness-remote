@@ -1,10 +1,11 @@
 import { isAcpManagedBackend } from '../lib/workspace-key'
 import { chatImageAttachmentReference, createChatImageLoader } from '../services/chat-image-loader'
 import { cursorNativeId, foldAcpHistory, readAcpHistory } from '../services/cursor'
+import { createDimaReader } from '../services/dima'
 import { loadWorkspacePreview } from '../services/workspace-file-preview'
 import type { ChatImage, RemoteSession } from '../types'
 import { create } from 'zustand'
-import { getActiveLanguage } from '../locales/i18n'
+import { getActiveLanguage, strings } from '../locales/i18n'
 import { DEFAULT_CHAT_APPEARANCE } from '../ui/theme'
 import { createAccountActions } from './account-actions'
 import { createConnectionActions } from './connection-actions'
@@ -28,6 +29,13 @@ export const requireProxy = () => runtime.connection.requireProxy()
 export const requireSessionTools = (sessionId?: string) => runtime.connection.requireSessionTools(sessionId)
 export const requireBotClient = () => runtime.connection.requireBotClient()
 export const requireConnectionRpc = () => runtime.connection.createRpcCaller()
+export const isDimaOnlyConnection = () => runtime.connection.isDimaOnly()
+export function requireDimaReader(generation: number) {
+  if (generation !== runtime.connectionGeneration || !runtime.connection.hasDima()) {
+    throw new Error(strings.dima.unavailable)
+  }
+  return createDimaReader(runtime.connection.createRpcCaller())
+}
 export const getConnectionGeneration = () => runtime.connectionGeneration
 export const supportsPushWake = () => runtime.connection.supportsPushWake?.() === true
 
@@ -57,6 +65,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   connectionProbeOrder: [],
   hostSessionEvents: false,
   hostWorkspaceGit: false,
+  dimaAvailable: false,
   codexAvailable: false,
   cursorAvailable: false,
   antigravityAvailable: false,

@@ -89,6 +89,8 @@ export class AndroidRemoteRuntime {
   requireSessionTools(sessionId?: string) { return this.client.requireSessionTools(sessionId) }
   hasSessionEvents() { return typeof this.client.hasSessionEvents === 'function' ? this.client.hasSessionEvents() : false }
   hasWorkspaceGit() { return typeof this.client.hasWorkspaceGit === 'function' ? this.client.hasWorkspaceGit() : false }
+  isDimaOnly() { return this.connected && this.client.isDimaOnly?.() === true }
+  hasDima() { return this.connected && this.client.hasDima?.() === true }
   hasCodex() { return this.client.hasCodex() }
   requireCursor() { return this.client.requireCursor() }
   hasCursor() { return this.client.hasCursor() }

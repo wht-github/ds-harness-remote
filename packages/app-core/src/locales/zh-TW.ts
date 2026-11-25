@@ -1,4 +1,14 @@
 const zhTW = {
+  dima: {
+    readOnly: '唯讀對話記錄',
+    emptySessions: '此工作區尚無對話。',
+    emptyBranches: '此對話沒有可瀏覽的分支。',
+    chooseBranch: '選擇分支',
+    emptyHistory: '此分支尚無訊息。',
+    truncated: '主機僅傳回部分對話記錄。',
+    unavailable: '此連線上的 DimAgent 對話記錄無法使用。',
+    invalidResponse: '主機傳回的 DimAgent 資料與要求不符。',
+  },
   bots: {
     btw: "Side question",
     btwHint: "Use /btw to ask without interrupting or adding to the Bot’s context.",

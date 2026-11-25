@@ -9,6 +9,16 @@ const plural = (n: number, one: string, few: string, many: string): string => {
 }
 
 const ruRU = {
+  dima: {
+    readOnly: 'История диалогов (только чтение)',
+    emptySessions: 'В этой рабочей области нет диалогов.',
+    emptyBranches: 'Для этого диалога нет доступных веток.',
+    chooseBranch: 'Выберите ветку',
+    emptyHistory: 'В этой ветке нет сообщений.',
+    truncated: 'Хост вернул только часть истории.',
+    unavailable: 'История DimAgent недоступна в этом подключении.',
+    invalidResponse: 'Хост вернул неожиданные данные DimAgent.',
+  },
   bots: {
     btw: "Побочный вопрос",
     btwHint: "Используйте /btw, чтобы спросить, не прерывая бота и не добавляя вопрос в его контекст.",
