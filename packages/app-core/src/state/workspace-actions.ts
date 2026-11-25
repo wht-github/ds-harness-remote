@@ -227,6 +227,7 @@ export function createWorkspaceActions({ set, get, connection, getConnectionGene
         const backendPrefix = `${backend}:`
         set(state => ({
           hostWorkspaceGit: connection.hasWorkspaceGit?.() ?? false,
+          dimaAvailable: connection.hasDima?.() === true,
           codexAvailable: connection.hasCodex(),
           cursorAvailable: connection.hasCursor(),
           antigravityAvailable: connection.hasAntigravity(),

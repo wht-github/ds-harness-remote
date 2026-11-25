@@ -149,6 +149,10 @@ Harness Host に公開待ち受けポートは不要です。インターネッ�
 
 Host 上の Harness やプラグインの設定もリモートで変更できます。編集できる項目は、Harness と各プラグインが公式設定 API で公開している内容によって異なります。
 
+## DimAgent のネイティブワークスペース
+
+Harness Host と同じユーザーで `dima` を起動し、App Server を実行したままにします。DSH Web の Remote ワークスペース選択画面、または Host に接続した Android アプリで **DimAgent** を選ぶと、既存のセッションを開き、ブランチごとの会話履歴を読めます。独自のデータディレクトリを使う場合は、Host の `DIMCODE_HOME` に同じ場所を指定します。プラグイン設定の `dima.enabled: false` で無効にできます。
+
 ## 実験的な ACP ワークスペース
 
 Host はローカルの ACP 対応 Agent を起動し、ds-harness-remote を通じてプロンプト、ストリーミング応答、承認要求を転送します。各 Agent は自身のワークスペースとセッションを使用し、DSH 向けのセッション変換のみを行います。Harness のストレージには書き込みません。

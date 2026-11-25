@@ -12,6 +12,16 @@ function plural(n: number, one: string, few: string, many: string): string {
 }
 
 const ukUA = {
+  dima: {
+    readOnly: 'Історія розмов (лише читання)',
+    emptySessions: 'У цьому робочому просторі немає розмов.',
+    emptyBranches: 'Для цієї розмови немає доступних гілок.',
+    chooseBranch: 'Виберіть гілку',
+    emptyHistory: 'У цій гілці немає повідомлень.',
+    truncated: 'Хост повернув лише частину історії.',
+    unavailable: 'Історія DimAgent недоступна за цим з’єднанням.',
+    invalidResponse: 'Хост повернув неочікувані дані DimAgent.',
+  },
   bots: {
     btw: "Побічне питання",
     btwHint: "Використайте /btw, щоб запитати, не перериваючи бота й не додаючи нічого до його контексту.",

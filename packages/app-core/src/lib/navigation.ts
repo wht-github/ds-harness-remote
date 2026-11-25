@@ -1,4 +1,4 @@
-import type { AttentionMode } from '@dsh-remote/protocol'
+import type { AttentionMode, DimaHistoryRequest } from '@dsh-remote/protocol'
 
 export type AppRoute =
   | { name: 'server' }
@@ -15,6 +15,7 @@ export type AppRoute =
       openAttentionInbox?: boolean
     }
   | { name: 'chat'; botConversationId?: string; externalOpenRevision?: number }
+  | { name: 'dima'; scope: string; history?: DimaHistoryRequest; title?: string }
   | { name: 'settings' }
   | { name: 'appearance' }
   | { name: 'diagnostics' }

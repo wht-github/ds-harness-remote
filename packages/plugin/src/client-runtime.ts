@@ -495,6 +495,7 @@ export class ClientModeRuntime {
 
   async listRemoteWorkspaces(targetDeviceId: string, signal?: AbortSignal): Promise<RemoteWorkspaceView[]> {
     const remote = await this.ensureConnected(targetDeviceId, signal)
+    if (remote.features.dima && !remote.features.remoteGateway) return []
     return readRemoteWorkspaceBaseline(new RemoteTypertGateway(remote.client), signal)
   }
 
@@ -1218,7 +1219,7 @@ function hasAcpFeature(features: RemoteHostFeatures, backend: string): boolean {
   if (backend === 'opencode') return features.opencode
   if (backend === 'claude') return Boolean(features.claude)
   if (backend === 'hermes') return Boolean(features.hermes)
-  return features.workspaceTypes?.some(item => item.id === backend && item.available) ?? false
+  return features.workspaceTypes?.some(item => item.id === backend && item.available && item.capability === `agent.acp.${backend}.v1`) ?? false
 }
 
 function remoteAcpCapabilities(features: RemoteHostFeatures): string[] {

@@ -151,6 +151,10 @@ The client switches to the selected Host’s native Harness API, keeping the ori
 
 You can also edit Harness and plugin settings on the remote host. Available options depend on which settings Harness and each plugin expose through the official settings API.
 
+## Native DimAgent workspaces
+
+Run `dima` as the same user as the Harness Host and keep its App Server running. Choose **DimAgent** in the DSH Web Remote workspace picker or on a connected Android client to browse existing sessions, select a branch, and read its conversation history. For a custom product home, set the Host’s `DIMCODE_HOME` to the same directory. Set `dima.enabled: false` in the plugin configuration to disable this integration.
+
 ## Experimental ACP workspaces
 
 The Host runs local ACP-capable Agents and forwards prompts, streamed replies, and approvals through ds-harness-remote. Each Agent keeps its own workspaces and sessions; only session translation for DSH is performed, without writing to Harness storage.

@@ -33,6 +33,8 @@ import {
   type AttentionDigest,
 } from './attention.js'
 export * from './attention.js'
+export * from './dima.js'
+import { DIMA_RPC_METHODS } from './dima.js'
 import { WORKSPACE_GIT_METHODS } from './workspace-git.js'
 import { z } from 'zod'
 
@@ -229,6 +231,7 @@ export const rpcMethods = [
   ...sessionTransferMethods,
   ...attentionRpcMethods,
   ...WORKSPACE_GIT_METHODS,
+  ...DIMA_RPC_METHODS,
   'workspace.upload.lan.open',
   'workspace.upload.open',
   'workspace.upload.chunk',

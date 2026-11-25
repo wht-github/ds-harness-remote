@@ -1,4 +1,5 @@
 import {
+  DIMA_CAPABILITY,
   HARNESS_API_TRANSFER_CHUNK_BYTES,
   MAX_HARNESS_API_TRANSFER_BYTES,
   MAX_REMOTE_CAPABILITY_ENTRIES,
@@ -134,6 +135,7 @@ const streamTransferClients = new WeakSet<RemoteClientCore>()
 export async function probeRemoteHostFeatures(
   client: RemoteClientCore,
   clientVersion?: string,
+  options: { allowStandaloneDima?: boolean } = {},
 ): Promise<RemoteHostFeatures> {
   const fallback = remoteHostFeatures(clientVersion)
   let value: unknown
@@ -161,10 +163,11 @@ export async function probeRemoteHostFeatures(
   }
   const sessionFormat = remoteV3 ? 3 as const : undefined
   const remoteGateway = remoteV3 || remoteV1
-  if (!apiProxy && !remoteGateway) {
+  const workspaceTypes = isRecord(value) && 'workspaceTypes' in value ? parseRemoteWorkspaceTypes(value.workspaceTypes) : undefined
+  if (!apiProxy && !remoteGateway && !(options.allowStandaloneDima
+    && remoteWorkspaceTypeAvailable(description.capabilities, workspaceTypes, 'dima.appserver', DIMA_CAPABILITY))) {
     throw new RemoteGatewayError('FEATURE_NOT_SUPPORTED', 'The remote Host exposes no supported Harness transport.')
   }
-  const workspaceTypes = isRecord(value) && 'workspaceTypes' in value ? parseRemoteWorkspaceTypes(value.workspaceTypes) : undefined
   const endpoints = value.sameLinkIpv6Endpoints
   const sameLinkIpv6Endpoints = Array.isArray(endpoints) && endpoints.length <= 8
     ? endpoints.filter((endpoint): endpoint is string => typeof endpoint === 'string' &&

@@ -2,6 +2,15 @@
   "name": "capability-negotiation",
   "cases": [
     {
+      "name": "dima-client-selects-native-app-server",
+      "operation": "selectCapabilities",
+      "input": {
+        "offered": ["dima.appserver.v1", "agent.acp.v1"],
+        "supported": ["dima.appserver.v1"]
+      },
+      "expect": { "accepted": true, "value": ["dima.appserver.v1"] }
+    },
+    {
       "name": "web-client-without-lan-support-selects-public-handoff",
       "operation": "selectCapabilities",
       "input": {

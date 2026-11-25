@@ -60,6 +60,7 @@ export function createConnectionActions({ get, set, runtime }: SessionAccess): P
         hostDescriptor: undefined,
         hostSessionEvents: false,
         hostWorkspaceGit: false,
+        dimaAvailable: false,
         codexAvailable: false,
         cursorAvailable: false,
         antigravityAvailable: false,
@@ -158,6 +159,7 @@ export function createConnectionActions({ get, set, runtime }: SessionAccess): P
                   connectionStage: undefined,
                   hostSessionEvents: false,
                   hostWorkspaceGit: false,
+                  dimaAvailable: false,
                   codexAvailable: false,
                   cursorAvailable: false,
                   antigravityAvailable: false,
@@ -177,17 +179,19 @@ export function createConnectionActions({ get, set, runtime }: SessionAccess): P
         )
         if (generation !== runtime.connectionGeneration) return false
         set({ connectionStage: 'loading' })
-        const proxy = runtime.connection.requireProxy()
-        // Catalogs belong to the category the user opens, not connection setup.
-        const hostDescriptor = await proxy.hostDescribe()
+        const dimaOnly = runtime.connection.isDimaOnly?.() === true
+        // The independent Dima service has no Harness descriptor or session catalog.
+        const hostDescriptor = dimaOnly ? undefined : await runtime.connection.requireProxy().hostDescribe()
         const connectionNetworkDetails = await runtime.connection.getNetworkDetails().catch(() => undefined)
         if (generation !== runtime.connectionGeneration) return false
         const connectedStats = runtime.connection.getStats() ?? { mode: 'Relay', connected: true }
         runtime.webRtcFallbackStreak = 0
         set({
           hostDescriptor,
+          ...(dimaOnly ? { selectedSession: undefined, workspaces: [], sessions: [], currentWorkSessionIds: [] } : {}),
           hostSessionEvents: runtime.connection.hasSessionEvents(),
           hostWorkspaceGit: runtime.connection.hasWorkspaceGit?.() ?? false,
+          dimaAvailable: runtime.connection.hasDima?.() === true,
           codexAvailable: runtime.connection.hasCodex(),
           cursorAvailable: runtime.connection.hasCursor(),
           antigravityAvailable: runtime.connection.hasAntigravity(),
@@ -243,6 +247,7 @@ export function createConnectionActions({ get, set, runtime }: SessionAccess): P
           connectionStage: undefined,
           ...(failedStage === 'transport' ? { relayOnlyUntil: Date.now() + RELAY_DOWNGRADE_MS } : {}),
           hostWorkspaceGit: false,
+          dimaAvailable: false,
           codexAvailable: false,
           cursorAvailable: false,
           antigravityAvailable: false,
@@ -423,6 +428,7 @@ export function createConnectionActions({ get, set, runtime }: SessionAccess): P
         hostDescriptor: undefined,
         hostSessionEvents: false,
         hostWorkspaceGit: false,
+        dimaAvailable: false,
         codexAvailable: false,
         cursorAvailable: false,
         antigravityAvailable: false,
@@ -470,6 +476,7 @@ export function createConnectionActions({ get, set, runtime }: SessionAccess): P
             ...(state.connection.retryable === false ? { retryable: false } : {}) },
           hostSessionEvents: false,
           hostWorkspaceGit: false,
+          dimaAvailable: false,
           codexAvailable: false,
           busyAction: undefined,
           permissionSelecting: false,

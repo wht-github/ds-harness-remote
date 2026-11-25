@@ -1,4 +1,5 @@
 import type { ControlResult } from './control-result.js'
+import { isDimaEndpoint, readDimaControl } from './client-dima-control.js'
 import { CodexRemoteClient } from '@dsh-remote/client-core'
 import type { PluginRouteCallResult } from '@dsh-remote/protocol'
 import type { AcpVirtualWorkspaceView } from './acp/virtual-harness.js'
@@ -57,6 +58,7 @@ export class ClientControl {
 
   async handleControl(endpoint: string, payload: unknown, signal: AbortSignal): Promise<ControlResult<unknown>> {
     try {
+      if (isDimaEndpoint(endpoint)) return ok(await readDimaControl(endpoint, payload, signal, this.context.host, this.context.activeRemote))
       if (endpoint === 'status') return ok(await this.context.detailedStatus())
       if (endpoint === 'client.authorization.status') {
         return ok({ hasCredentials: await this.context.server.hasStoredAuthorization() })

@@ -44,6 +44,7 @@ export interface Config {
     maxDelayMs?: number
     jitter?: number
   }
+  dima?: { enabled?: boolean }
   /** Optional Codex domain carried by the existing authenticated Remote Plugin. */
   codex?: {
     enabled?: boolean
@@ -101,6 +102,7 @@ export interface ResolvedConfig {
   sidebar: { entry: 'standard' | 'compact' }
   hostControl?: { enabled: boolean }
   loopback: { ports: number[] }
+  dima?: { enabled: boolean }
   codex: ResolvedCodexConfig
   cursor: ResolvedCursorConfig
   acp?: ResolvedAcpConfig
@@ -143,6 +145,7 @@ export const entryConfigSchema = s.object({
       jitter: s.number(),
     }),
   ]),
+  dima: s.object({ enabled: s.boolean() }),
   codex: s.object({
     enabled: s.boolean(),
     binary: s.string(),
@@ -194,6 +197,7 @@ const configSchema = z.object({
   rotatePinnedPeerKey: z.boolean().optional(),
   logLevel: z.enum(['debug', 'info', 'warn', 'error']).optional(),
   reconnect: reconnectSchema.optional(),
+  dima: z.object({ enabled: z.boolean().optional() }).strict().optional(),
   codex: z.object({
     enabled: z.boolean().optional(),
     binary: z.string().trim().min(1).max(4096).optional(),
@@ -248,6 +252,7 @@ export function resolveConfig(input: ConfigInput = {}, env: NodeJS.ProcessEnv = 
       maxDelayMs,
       jitter: reconnect.jitter ?? 0.2,
     },
+    dima: { enabled: parsed.dima?.enabled ?? true },
     codex: {
       enabled: acpEnabled && codexEnabled,
       binary: codexBackend?.command ?? parsed.codex?.binary ?? 'codex',

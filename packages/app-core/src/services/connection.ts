@@ -2,6 +2,7 @@ import {
   WORKSPACE_GIT_CAPABILITY,
   ATTENTION_INBOX_CAPABILITY,
   ATTENTION_SIGNAL_CAPABILITY,
+  DIMA_CAPABILITY,
   DSH_WEB_CAPABILITY,
   DSH_WEB_LAN_CAPABILITY,
   DSH_WEB_LAN_IPV6_CAPABILITY,
@@ -95,6 +96,7 @@ export class AndroidRemoteConnection {
   private codex?: CodexRemoteClient
   private cursor?: AgentAcpClient
   private acpBackends = new Set<string>()
+  private dimaAvailable = false
   private codexAvailable = false
   private sessionTools?: HarnessSessionTools
   private closeMux?: (notifyRemote?: boolean) => Promise<void>
@@ -236,6 +238,7 @@ export class AndroidRemoteConnection {
         this.attentionInboxSupported = false
         this.pushWakeSupported = false
         this.attentionClient = undefined
+        this.dimaAvailable = false
         this.codexAvailable = false
         this.cursor = undefined
         this.acpBackends.clear()
@@ -257,7 +260,7 @@ export class AndroidRemoteConnection {
         : undefined
       this.pushWakeSupported = Array.isArray(initialDetails?.negotiatedCapabilities)
         && initialDetails.negotiatedCapabilities.includes(PUSH_WAKE_CAPABILITY)
-      const features = await probeRemoteHostFeatures(core, host.clientVersion)
+      const features = await probeRemoteHostFeatures(core, host.clientVersion, { allowStandaloneDima: true })
       if (attempt !== this.connectionAttempt || this.core !== core) throw new Error('The connection attempt was superseded.')
       // Only Relay fallback needs an in-band upgrade. Initial WebRTC legs use
       // unsequenced framing and must not enter the sequenced upgrade path.
@@ -337,7 +340,7 @@ export class AndroidRemoteConnection {
         void alpha.resumeCompactions().catch(() => undefined)
         this.proxy = alpha
         this.closeMux = async (notifyRemote = true) => { await alpha.close(notifyRemote) }
-      } else {
+      } else if (!this.hasDima()) {
         throw new Error('The remote Host exposes no supported Harness transport.')
       }
       this.scheduleHealthCheck(core)
@@ -353,7 +356,7 @@ export class AndroidRemoteConnection {
   async refreshBackends(): Promise<void> {
     if (this.core === undefined) throw new Error(strings.runtime.connectHostFirst)
     const core = this.core
-    const features = await probeRemoteHostFeatures(core)
+    const features = await probeRemoteHostFeatures(core, undefined, { allowStandaloneDima: true })
     if (this.core !== core) return
     this.applyBackendFeatures(core, features)
   }
@@ -369,6 +372,7 @@ export class AndroidRemoteConnection {
     this.attentionInboxSupported = features.capabilities.includes(ATTENTION_INBOX_CAPABILITY)
     this.attentionClient = createRemoteAttentionClient(createAttentionRpcTransport(core))
     this.dshWeb = features.capabilities.includes(DSH_WEB_CAPABILITY)
+    this.dimaAvailable = remoteWorkspaceTypeAvailable(features.capabilities, features.workspaceTypes, 'dima.appserver', DIMA_CAPABILITY)
     this.codexAvailable = features.capabilities.includes('codex.appserver.transfer.v1')
       && remoteWorkspaceTypeAvailable(features.capabilities, features.workspaceTypes, 'codex', 'codex.appserver.v1')
     if (this.codexAvailable) this.codex ??= new CodexRemoteClient(core, true)
@@ -537,6 +541,14 @@ export class AndroidRemoteConnection {
 
   hasWorkspaceGit(): boolean {
     return this.workspaceGitSupported
+  }
+
+  isDimaOnly(): boolean {
+    return this.hasDima() && this.proxy === undefined
+  }
+
+  hasDima(): boolean {
+    return this.core !== undefined && this.dimaAvailable
   }
 
   hasCodex(): boolean {
@@ -725,6 +737,7 @@ export class AndroidRemoteConnection {
     this.transport = undefined
     this.proxy = undefined
     this.codex = undefined
+    this.dimaAvailable = false
     this.codexAvailable = false
     this.workspaceGitSupported = false
     this.attentionInboxSupported = false

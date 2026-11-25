@@ -1,6 +1,16 @@
 import type { Messages } from './types'
 
 const enUS = {
+  dima: {
+    readOnly: 'Read-only conversation history',
+    emptySessions: 'No conversations in this workspace.',
+    emptyBranches: 'No branches available for this conversation.',
+    chooseBranch: 'Choose a branch',
+    emptyHistory: 'No messages in this branch.',
+    truncated: 'The Host returned only part of the history.',
+    unavailable: 'DimAgent history is unavailable on this connection.',
+    invalidResponse: 'The Host returned unexpected DimAgent data.',
+  },
   bots: {
     btw: "Side question",
     btwHint: "Use /btw to ask without interrupting or adding to the Bot’s context.",

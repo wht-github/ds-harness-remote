@@ -1,6 +1,16 @@
 import type { Messages } from './types'
 
 const deDE = {
+  dima: {
+    readOnly: 'Gesprächsverlauf (schreibgeschützt)',
+    emptySessions: 'Keine Gespräche in diesem Arbeitsbereich.',
+    emptyBranches: 'Für dieses Gespräch sind keine Zweige verfügbar.',
+    chooseBranch: 'Zweig auswählen',
+    emptyHistory: 'Keine Nachrichten in diesem Zweig.',
+    truncated: 'Der Host hat nur einen Teil des Verlaufs zurückgegeben.',
+    unavailable: 'Der DimAgent-Verlauf ist über diese Verbindung nicht verfügbar.',
+    invalidResponse: 'Der Host hat unerwartete DimAgent-Daten zurückgegeben.',
+  },
   bots: {
     btw: "Side question",
     btwHint: "Use /btw to ask without interrupting or adding to the Bot’s context.",

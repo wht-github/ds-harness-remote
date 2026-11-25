@@ -86,12 +86,20 @@ describe('Remote discovery authority and lifecycle', () => {
         }),
       }
       carriers.push(client)
-      return { client, target: { deviceId: hostId }, features: { antigravity: true, cursor: true } } as unknown as ConnectedRemote
+      return { client, target: { deviceId: hostId }, features: {
+        antigravity: true, cursor: true,
+        workspaceTypes: [
+          { id: 'dima', name: 'Custom ACP', available: true, capability: 'agent.acp.dima.v1' },
+          { id: 'dima.appserver', name: 'DimAgent', available: true, capability: 'dima.appserver.v1' },
+        ],
+      } } as unknown as ConnectedRemote
     })
     const results = await Promise.all(['host-a', 'host-b'].map(hostId => runtime.discoverToolWorkspaces(hostId, new AbortController().signal)))
     for (const [index, hostId] of ['host-a', 'host-b'].entries()) {
       expect(results[index]).toEqual({
-        workspaces: [{ backend: 'antigravity', workspaceId: `antigravity:cwd:${encodeURIComponent(`/${hostId}/project`)}`, path: `/${hostId}/project`, title: hostId }],
+        workspaces: ['antigravity', 'dima'].map(backend => ({
+          backend, workspaceId: `${backend}:cwd:${encodeURIComponent(`/${hostId}/project`)}`, path: `/${hostId}/project`, title: hostId,
+        })),
         unavailable: [{ backend: 'cursor', code: 'BACKEND_UNAVAILABLE' }],
       })
       expect(connect.mock.calls[index]?.[2]).toEqual({ background: true })

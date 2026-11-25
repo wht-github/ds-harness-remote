@@ -9,13 +9,14 @@ import * as SplashScreen from 'expo-splash-screen'
 import { StatusBar } from 'expo-status-bar'
 import { SafeAreaProvider, SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { ChatScreen } from './src/screens/chat-screen'
+import { DimaScreen } from './src/screens/dima-screen'
 import { AttentionInboxSheet } from './src/screens/attention-inbox-sheet'
 import { ChatAppearanceScreen } from './src/screens/chat-appearance-screen'
 import { ConnectionScreen, DeviceDetailScreen } from './src/screens/device-screens'
 import { HostSwitcherSheet } from './src/screens/host-switcher-sheet'
 import { RemoteHostsScreen } from './src/screens/remote-hosts-screen'
 import { AboutScreen, DiagnosticsScreen, HomeActionsMenu, ServerSetupScreen, SettingsScreen, openMembershipPlan, useStartupUpdateCheck } from './src/screens/setup-screens'
-import { stopConnectionRecovery, useAppStore } from './src/state/store'
+import { isDimaOnlyConnection, stopConnectionRecovery, useAppStore } from './src/state/store'
 import { useAttentionStore } from './src/state/attention-store'
 import { useBotTeamStore } from './src/state/bot-store'
 import { ForegroundConnectionRecovery } from './src/services/connection-recovery'
@@ -125,6 +126,7 @@ function AppNavigator() {
   const devices = useAppStore(state => state.devices)
   const selectedDevice = useAppStore(state => state.selectedDevice)
   const connectionPhase = useAppStore(state => state.connection.phase)
+  const dimaOnly = useAppStore(state => state.dimaAvailable && state.connection.phase === 'connected' && isDimaOnlyConnection())
   const hostScope = browseScope({ config, selectedDevice })
   const botMode = useBrowseMemory(state => state.hostModes[hostScope] === 'bot')
   const autoConnectHost = useBrowseMemory(state => state.autoConnectHost)
@@ -289,7 +291,7 @@ function AppNavigator() {
 
   const openDevice = (device: (typeof devices)[number]) => {
     if (selectedDevice?.deviceId === device.deviceId && useAppStore.getState().connection.phase === 'connected') {
-      reset({ name: 'chat' })
+      goHomeChat()
       return
     }
     if (device.trusted && !device.online) {
@@ -302,10 +304,24 @@ function AppNavigator() {
       : { name: 'device', deviceId: device.deviceId })
   }
 
-  const goHomeChat = () => reset({ name: 'chat' })
+  const openDimaOnlyHost = () => {
+    const state = useAppStore.getState()
+    if (state.connection.phase !== 'connected' || !isDimaOnlyConnection()) return false
+    setHostSwitcherOpen(false)
+    reset({ name: 'dima', scope: browseScope(state) })
+    return true
+  }
+  const goHomeChat = () => {
+    if (!openDimaOnlyHost()) reset({ name: 'chat' })
+  }
   const openHomeMenu = () => setHomeMenuOpen(true)
 
+  useEffect(() => {
+    if (route.name === 'chat' && dimaOnly) openDimaOnlyHost()
+  }, [route.name, dimaOnly])
+
   const openShortcutSession = async (workspaceKey: string) => {
+    if (openDimaOnlyHost()) return
     await useAppStore.getState().openFavoriteWorkspaceSession(workspaceKey)
     reset({ name: 'chat' })
   }
@@ -322,6 +338,10 @@ function AppNavigator() {
 
   const externalOpenRevision = useRef(0)
   const openKnownSession = async (id: string, mode: AttentionMode = 'agent') => {
+    if (openDimaOnlyHost()) {
+      useAppStore.setState({ error: zhCN.comfort.conversationMissing })
+      return
+    }
     const revision = ++externalOpenRevision.current
     setResolvingKnownSession(true)
     try {
@@ -392,6 +412,7 @@ function AppNavigator() {
   }
 
   const openAttentionTarget = async (options: { token?: string }) => {
+    if (openDimaOnlyHost()) return
     const revision = ++externalOpenRevision.current
     setResolvingKnownSession(true)
     try {
@@ -601,7 +622,7 @@ function AppNavigator() {
 
   const backFromRemoteHosts = () => {
     if (routes.length > 1) pop()
-    else reset({ name: 'chat' })
+    else goHomeChat()
   }
 
   const homeMenuVisible = homeMenuOpen && route.name === 'server'
@@ -797,6 +818,7 @@ function AppNavigator() {
         )
       }
       case 'chat':
+        if (dimaOnly) return null
         return (
           <ChatScreen
             active={active}
@@ -821,6 +843,7 @@ function AppNavigator() {
             }))}
             onBack={pop}
             onOpenHostSwitcher={() => setHostSwitcherOpen(true)}
+            onOpenDima={() => push({ name: 'dima', scope: hostScope })}
             onOpenAttentionInbox={() => setAttentionInboxOpen(true)}
             onOpenSettings={() => push({ name: 'settings' })}
             onOpenAbout={() => push({ name: 'about' })}
@@ -830,6 +853,10 @@ function AppNavigator() {
             }}
           />
         )
+      case 'dima':
+        return <DimaScreen route={entry} onBack={index > 0 ? pop : () => reset({ name: 'remote-hosts' })} onOpenHistory={(history, title) => {
+          push({ name: 'dima', scope: entry.scope, history, title })
+        }} />
       case 'settings':
         return (
           <SettingsScreen

@@ -648,7 +648,7 @@ describe('HostPluginRuntime multi-Client routing', () => {
     await runScenarios(['slow-resolves-after-grace', 'slow-rejects-after-grace', 'fast-startup'].map(mode => ({
       name: mode,
       run: async () => {
-        const settings = { ...config(), codex: { enabled: true, binary: '/test/codex' } }
+        const settings = { ...config(), codex: { enabled: true, binary: '/test/codex' }, dima: { enabled: false } }
         const log = logger()
         const runtime = new HostPluginRuntime(
           settings,

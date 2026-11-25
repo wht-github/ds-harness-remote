@@ -3,7 +3,7 @@ import { strings } from '../locales/i18n'
 import { AppState, Platform } from 'react-native'
 import { deriveLegacyAttentionItems, useAttentionStore } from '../state/attention-store'
 import { useBotTeamStore } from '../state/bot-store'
-import { useAppStore } from '../state/store'
+import { isDimaOnlyConnection, useAppStore } from '../state/store'
 import type { AgentBackend } from '../types'
 import { browseKey, browseScope, useBrowseMemory, updateBrowseEntry, saveBrowseCatalog, browsePreference, flushBrowseMemory } from './browse-memory'
 import { foregroundService } from './foreground-service'
@@ -207,7 +207,8 @@ export function startBrowseTracking(): () => void {
       previousWorkspaceKey = undefined
     }
 
-    if (!connected || !memory.ready) {
+    // Dima provides its own read-only catalog. Keep the cached Harness catalog for this Host.
+    if (!connected || !memory.ready || (state.dimaAvailable && isDimaOnlyConnection())) {
       completedSessionIds.clear()
       running.clear()
       void liveSurface.sync({

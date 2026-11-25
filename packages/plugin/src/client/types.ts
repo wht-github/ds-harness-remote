@@ -45,6 +45,7 @@ export interface RemoteStatus {
     terminal?: boolean
     pluginRoute?: boolean
     codex?: boolean
+    dima?: boolean
     cursor?: boolean
     antigravity?: boolean
     pi?: boolean

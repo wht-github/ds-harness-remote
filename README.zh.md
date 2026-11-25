@@ -153,6 +153,10 @@ Harness 主机无需开放公网监听端口。只要能够访问互联网，就
 
 你也可以远程修改主机上的 Harness 和插件设置；可编辑的选项取决于 Harness 和各插件通过官方设置接口开放的配置项。
 
+## DimAgent 原生工作区
+
+在 Host 上以运行 Harness 的同一用户启动 `dima`，保持 App Server 运行。打开 DSH Web 的 Remote 工作区选择器，或在 Android 应用中连接此 Host，选择 **DimAgent** 即可浏览已有会话、切换分支和阅读对话历史。使用自定义产品目录时，让 Host 的 `DIMCODE_HOME` 指向相同目录。可通过插件配置 `dima.enabled: false` 关闭。
+
 ## 实验性 ACP 工作区
 
 Host 启动本机支持ACP 的Agent，通过ds-harness-remote 通道传递 Prompt、流式回复和审批。所有Agent都使用自身工作区和会话，只做DSH 会话翻译转换，不写入 Harness 存储。

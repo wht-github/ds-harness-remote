@@ -2,6 +2,7 @@ vi.mock('expo', () => ({ requireOptionalNativeModule: () => undefined }))
 import { runScenarios, scenarioName } from '../../../scripts/test-scenarios.mjs'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { AdaptiveTransportOptions } from '@dsh-remote/webrtc'
+import { DIMA_CAPABILITY } from '@dsh-remote/protocol'
 
 class FakeCore {
   private readonly closeHandlers = new Set<() => void>()
@@ -492,6 +493,37 @@ afterEach(async () => {
         await prepareScenario1()
       },
     )
+  })
+
+  it('negotiates native Dima independently of Harness and a custom dima ACP adapter', async () => {
+    const native = { id: 'dima.appserver', name: 'Dima', available: true, capability: DIMA_CAPABILITY }
+    const acp = { id: 'dima', name: 'Custom adapter', available: true, capability: 'agent.acp.dima.v1' }
+    const connection = new AndroidRemoteConnection()
+    testState.capabilities = [DIMA_CAPABILITY]
+    testState.workspaceTypes = [native]
+    try {
+      await connection.connect('https://server.example.com', identity, host, 'synthetic', () => undefined)
+      expect(connection.isDimaOnly()).toBe(true)
+      expect(connection.hasDima()).toBe(true)
+      expect(connection.acpBackendIds()).toEqual([])
+      expect(() => connection.requireProxy()).toThrow()
+      expect(testState.cores[0]?.rpcCalls.map(call => call.method)).toEqual(['harness.transport.describe'])
+
+      testState.capabilities = ['harness.remote.v1', acp.capability, DIMA_CAPABILITY]
+      testState.workspaceTypes = [acp, native]
+      await connection.connect('https://server.example.com', identity, host, 'synthetic', () => undefined)
+      expect(connection.isDimaOnly()).toBe(false)
+      expect(connection.hasDima()).toBe(true)
+      expect(connection.acpBackendIds()).toEqual([acp.id])
+
+      testState.workspaceTypes = [acp, { ...native, available: false }]
+      await connection.refreshBackends()
+      expect(connection.hasDima()).toBe(false)
+      expect(connection.acpBackendIds()).toEqual([acp.id])
+    } finally {
+      await connection.close()
+    }
+    expect(connection.hasDima()).toBe(false)
   })
 
   it('preserves CodeX capability discovery for Hosts without workspaceTypes', async () => {

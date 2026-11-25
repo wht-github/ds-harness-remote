@@ -1,5 +1,5 @@
 import { RemoteClientCore, remoteWorkspaceTypeAvailable } from '@dsh-remote/client-core'
-import { MAX_REMOTE_CAPABILITY_ENTRIES, parseRemoteWorkspaceTypes } from '@dsh-remote/protocol'
+import { DIMA_CAPABILITY, MAX_REMOTE_CAPABILITY_ENTRIES, parseRemoteWorkspaceTypes } from '@dsh-remote/protocol'
 import type { RemoteHostFeatures } from './client-runtime-contract.js'
 import { ClientModeError, isRecord } from './client-runtime-contract.js'
 
@@ -43,6 +43,7 @@ export async function probeRemoteHostFeatures(
   const workspaceTypes = 'workspaceTypes' in value ? parseRemoteWorkspaceTypes(value.workspaceTypes) : undefined
   const available = (id: string, capability: string) => remoteWorkspaceTypeAvailable(value.capabilities as string[], workspaceTypes, id, capability)
   const codex = available('codex', 'codex.appserver.v1')
+  const dima = available('dima.appserver', DIMA_CAPABILITY)
   const cursor = available('cursor', 'agent.acp.cursor.v1')
   const antigravity = available('antigravity', 'agent.acp.antigravity.v1')
   const pi = available('pi', 'agent.acp.pi.v1')
@@ -54,9 +55,9 @@ export async function probeRemoteHostFeatures(
   }
   const sessionFormat = remoteV3 ? 3 as const : undefined
   const remoteGateway = remoteV3 || remoteV1
-  const anyCustomAcp = workspaceTypes?.some(type => type.available && type.id !== 'codex' && type.id !== 'harness')
+  const anyCustomAcp = workspaceTypes?.some(type => type.available && type.capability === `agent.acp.${type.id}.v1`)
     || value.capabilities.some(cap => cap.startsWith('agent.acp.') && cap.endsWith('.v1') && cap !== 'agent.acp.v1' && cap !== 'agent.acp.transfer.v1' && cap !== 'agent.acp.workspace-files.v1' && cap !== 'agent.acp.terminal.v1')
-  if (!remoteGateway && !codex && !cursor && !antigravity && !pi && !opencode && !claude && !hermes && !anyCustomAcp) {
+  if (!remoteGateway && !codex && !dima && !cursor && !antigravity && !pi && !opencode && !claude && !hermes && !anyCustomAcp) {
     throw new ClientModeError('FEATURE_NOT_SUPPORTED', 'The remote Host exposes no supported Harness transport.')
   }
   return {
@@ -66,6 +67,7 @@ export async function probeRemoteHostFeatures(
     remoteGateway,
     ...(sessionFormat === undefined ? {} : { sessionFormat }),
     codex,
+    ...(dima ? { dima: true } : {}),
     cursor,
     antigravity,
     ...(pi ? { pi: true } : {}),

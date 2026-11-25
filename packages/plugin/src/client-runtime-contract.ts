@@ -1,3 +1,4 @@
+import type { DimaCatalog, DimaHistory, DimaHistoryRequest } from '@dsh-remote/protocol'
 import type { ControlResult } from './control-result.js'
 import { RemoteClientCore } from '@dsh-remote/client-core'
 import type { AcpAuthDiagnostic, CodexAppFrameData, CodexAppStreamClosedData, RemoteWorkspaceTypeDescription } from '@dsh-remote/protocol'
@@ -25,6 +26,7 @@ export interface RemoteHostFeatures {
   remoteGateway: boolean
   sessionFormat?: 3
   codex: boolean
+  dima?: boolean
   cursor: boolean
   antigravity: boolean
   pi?: boolean
@@ -161,6 +163,9 @@ export interface HostAuthorizationControl {
   authorizeHostAsOwned(accessToken: string, account?: string): Promise<unknown>
   authorizeHostWithAccount(email: string, password: string, verification?: AccountVerification): Promise<unknown>
   authorizeHostWithCode(code: string): Promise<unknown>
+  dimaProbe?(): Promise<boolean>
+  dimaCatalog?(): Promise<DimaCatalog>
+  dimaHistory?(request: DimaHistoryRequest): Promise<DimaHistory>
   codexStatus?(): { available: boolean }
   codexCall?(input: unknown, signal?: AbortSignal): Promise<unknown>
   codexRespond?(input: unknown, signal?: AbortSignal): Promise<{ resolved: true }>

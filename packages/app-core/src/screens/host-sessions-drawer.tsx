@@ -185,6 +185,7 @@ export interface HostSessionsDrawerProps {
   onOpenAutomationTasks?: () => void
   onOpenPlugins?: () => void
   onOpenHostSwitcher?: () => void
+  onOpenDima?: () => void
   onOpenAttentionInbox?: () => void
   onOpenSettings?: () => void
   onOpenAbout?: () => void
@@ -482,6 +483,7 @@ const HarnessPickerModal = memo(function HarnessPickerModal({
   backend,
   backends,
   customAcpBackends,
+  onOpenDima,
   colors,
   styles,
   onClose,
@@ -491,6 +493,7 @@ const HarnessPickerModal = memo(function HarnessPickerModal({
   backend: AgentBackend
   backends: AgentBackend[]
   customAcpBackends: readonly string[]
+  onOpenDima?: () => void
   colors: ThemeColors
   styles: DrawerStyles
   onClose: () => void
@@ -535,6 +538,10 @@ const HarnessPickerModal = memo(function HarnessPickerModal({
                   />
                 )
               })}
+              {onOpenDima && <GroupRow label="DimAgent" detail={strings.dima.readOnly} onPress={() => {
+                onClose()
+                onOpenDima()
+              }} />}
             </GroupCard>
           </ScrollView>
         </View>
@@ -558,6 +565,7 @@ interface HostSessionsDrawerBodyProps {
   onOpenAutomationTasks?: () => void
   onOpenPlugins?: () => void
   onOpenHostSwitcher?: () => void
+  onOpenDima?: () => void
   onOpenAttentionInbox?: () => void
   onOpenSettings?: () => void
   onOpenAbout?: () => void
@@ -586,6 +594,7 @@ const HostSessionsDrawerBody = memo(function HostSessionsDrawerBody({
   onOpenAutomationTasks,
   onOpenPlugins,
   onOpenHostSwitcher,
+  onOpenDima,
   onOpenAttentionInbox,
   onOpenSettings,
   onOpenAbout,
@@ -606,6 +615,7 @@ const HostSessionsDrawerBody = memo(function HostSessionsDrawerBody({
   const connectionPhase = useStoreGateSelector(useAppStore, state => state.connection.phase, gate)
   const sessions = useStoreGateSelector(useAppStore, state => state.sessions, gate)
   const recentIds = useStoreGateSelector(useAppStore, state => state.currentWorkSessionIds, gate)
+  const dimaAvailable = useStoreGateSelector(useAppStore, state => state.dimaAvailable, gate)
   const codexAvailable = useStoreGateSelector(useAppStore, state => state.codexAvailable, gate)
   const cursorAvailable = useStoreGateSelector(useAppStore, state => state.cursorAvailable, gate)
   const antigravityAvailable = useStoreGateSelector(useAppStore, state => state.antigravityAvailable, gate)
@@ -2448,6 +2458,7 @@ const HostSessionsDrawerBody = memo(function HostSessionsDrawerBody({
         <HarnessPickerModal
           visible={harnessPickerOpen}
           backend={backend}
+          onOpenDima={connected && dimaAvailable ? onOpenDima : undefined}
           backends={backends}
           customAcpBackends={customAcpBackends}
           colors={colors}
@@ -2637,6 +2648,7 @@ export const HostSessionsDrawer = memo(function HostSessionsDrawer({
   onOpenAutomationTasks,
   onOpenPlugins,
   onOpenHostSwitcher,
+  onOpenDima,
   onOpenAttentionInbox,
   onOpenSettings,
   onOpenAbout,
@@ -2971,6 +2983,7 @@ export const HostSessionsDrawer = memo(function HostSessionsDrawer({
       onOpenAutomationTasks={onOpenAutomationTasks}
       onOpenPlugins={onOpenPlugins}
       onOpenHostSwitcher={onOpenHostSwitcher}
+      onOpenDima={onOpenDima}
       onOpenAttentionInbox={onOpenAttentionInbox}
       onOpenSettings={onOpenSettings}
       onOpenAbout={onOpenAbout}

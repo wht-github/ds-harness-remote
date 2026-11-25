@@ -1,6 +1,16 @@
 import type { Messages } from './types'
 
 const jaJP = {
+  dima: {
+    readOnly: '会話履歴（読み取り専用）',
+    emptySessions: 'このワークスペースには会話がありません。',
+    emptyBranches: 'この会話には表示できるブランチがありません。',
+    chooseBranch: 'ブランチを選択',
+    emptyHistory: 'このブランチにはメッセージがありません。',
+    truncated: 'ホストから履歴の一部のみが返されました。',
+    unavailable: 'この接続では DimAgent の履歴を利用できません。',
+    invalidResponse: 'ホストが返した DimAgent のデータがリクエストと一致しません。',
+  },
   bots: {
     btw: "Side question",
     btwHint: "Use /btw to ask without interrupting or adding to the Bot’s context.",

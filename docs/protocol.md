@@ -1051,7 +1051,7 @@ Host 已启用且实现该后端协议，不代表 CLI 已初始化完成。ACP 
 Web 接入时，`workspaceTypes` 是现有 `harness.transport.describe` 响应的可选加法字段，
 无需修改 Server 中继或握手协议。既有 Harness / CodeX 数据面应直接复用；新客户端优先读取
 有效的类型条目及 `available`，旧 Host 未提供该字段时才沿用 `capabilities` 判断。类型列表
-不是 Harness 入口的完整替代：当前 Host 单独声明 CodeX 和已启用的 ACP 后端，Harness
+不是 Harness 入口的完整替代：当前 Host 单独声明 CodeX、DimAgent 和已启用的 ACP 后端，Harness
 入口由 `harness.remote.v1|v3` 能力决定。未知类型可以展示其 `name`，
 但只有已有对应 RPC / 数据面处理器时才允许进入，不得据类型声明代理任意方法。
 
@@ -1061,6 +1061,17 @@ carrier 或 Session 代际不一致时，Desktop Client 必须在选择目标、
 返回 `HARNESS_VERSION_INCOMPATIBLE`。
 
 当前兼容范围见[版本兼容](compatibility.zh.md)。Plugin Client 与 Android 必须在加密通道中探测 capability，不能从 clientVersion 推测或降级到已退役 ApiProxy。
+
+### DimAgent 原生 App Server
+
+Host 连接同一系统用户正在运行的本机 DimAgent App Server，成功协商原生目录、分支与历史方法后，通过 `harness.transport.describe` 声明 `dima.appserver.v1` 与工作区类型 `{ id: "dima.appserver", name: "DimAgent", capability: "dima.appserver.v1", available: true }`。客户端按该能力选择只读浏览器。配置 `dima.enabled: false` 可关闭本机和远程两个入口。
+
+| Remote RPC | 参数 | 返回 |
+| --- | --- | --- |
+| `dima.app.catalog` | `{}` | `{ workspaces: [{ cwd, sessions: [{ sessionId, title, branches: string[] }] }] }` |
+| `dima.app.history` | `{ sessionId, branchId }` | `{ sessionId, branchId, messages: [{ role, text }], truncated }` |
+
+工作区路径、会话标识及分支来自 DimAgent。`branches` 首项是原生默认分支。历史按原生顺序展示用户和助手的文本，单次最多读取 8192 个事件，返回上限为 2 MiB；达到边界且仍有历史时返回已读前缀并带上 `truncated: true`。空历史是成功的读取结果；连接、权限、参数和上游读取错误通过 RPC 错误返回。远端调用沿用已认证的 Noise 连接，本机 DSH Web 通过插件控制路由读取同一数据。
 
 ### 跨机器会话传输
 

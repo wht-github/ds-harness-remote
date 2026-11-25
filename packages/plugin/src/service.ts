@@ -12,7 +12,7 @@ import { WorkspaceUploadBudget } from './workspace-upload-budget.js'
 import { resolveSessionWorkspaceRoot, workspaceUploadRootResolver } from './workspace-upload-authority.js'
 import { LoopbackHost } from './loopback-host.js'
 import { TerminalPolicy } from './terminal-policy.js'
-import { createEvent, REMOTE_SESSION_EVENTS_CAPABILITY, type RemoteWorkspaceTypeDescription } from '@dsh-remote/protocol'
+import { createEvent, REMOTE_SESSION_EVENTS_CAPABILITY, type DimaHistoryRequest, type RemoteWorkspaceTypeDescription } from '@dsh-remote/protocol'
 import { ConnectionController } from './connection-controller.js'
 import type { ResolvedConfig } from './config.js'
 import type { HostIdentity, IdentityStore } from './identity-store.js'
@@ -44,6 +44,7 @@ import { PluginRouteBridge } from './plugin-route-bridge.js'
 import type { LocalTypertGateway } from './typert-gateway-contract.js'
 import { loadNodeRtcFactory } from './werift-rtc.js'
 import type { AuthenticatedPeerChannel } from './types.js'
+import { DimaAppServer } from './dima/app-server.js'
 import { CodexRemoteDomain } from './codex/domain.js'
 import { AcpGateway, StdioAcpAdapter } from './acp.js'
 import { execFileSync } from 'node:child_process'
@@ -94,6 +95,7 @@ export class HostPluginRuntime {
   private closed = false
   private readonly detachedApprovalBudget = new DetachedApprovalBudget()
   private readonly attention: HostAttentionTracker
+  private readonly dima = new DimaAppServer()
   private readonly codex: CodexRemoteDomain
   private readonly acp: AcpRemoteGateway
   private readonly codexWorkspaceState = new CodexWorkspaceState(key => TerminalPolicy.releaseOwner(this.terminalOwners, key))
@@ -288,6 +290,7 @@ export class HostPluginRuntime {
           context.connectionId,
           event => send(createEvent('attention.follow.event', event)),
         ),
+        this,
       )
     }, this.logger)
     if (config.serverUrl !== undefined) {
@@ -313,6 +316,7 @@ export class HostPluginRuntime {
       await Promise.all([this.codex.reconfigure(config.codex), this.acp.reconfigure(config.acp ?? { enabled: false, backends: [] })])
       if (codexChanged) await this.codexWorkspaceState.dispose()
       this.config.codex = config.codex
+      this.config.dima = config.dima
     })
     this.backendUpdate = update
     return update
@@ -553,6 +557,25 @@ export class HostPluginRuntime {
     const revoked = await this.identities.revokePeer(deviceId)
     if (revoked) await this.connections.revoke(deviceId)
     return revoked
+  }
+
+  async dimaProbe(): Promise<boolean> {
+    return !this.closed && this.config.dima?.enabled !== false && await this.dima.probe()
+  }
+
+  dimaCatalog() {
+    return this.requireDima().catalog()
+  }
+
+  dimaHistory(request: DimaHistoryRequest) {
+    return this.requireDima().history(request)
+  }
+
+  private requireDima(): DimaAppServer {
+    if (this.closed || this.config.dima?.enabled === false) {
+      throw new RpcError('FEATURE_NOT_SUPPORTED', 'DimAgent is disabled on this Host.')
+    }
+    return this.dima
   }
 
   codexStatus(): ReturnType<CodexRemoteDomain['status']> {
