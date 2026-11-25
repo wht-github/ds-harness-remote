@@ -3,6 +3,7 @@ const path = require('node:path')
 const {
   AndroidConfig,
   withAndroidManifest,
+  withAppBuildGradle,
   withDangerousMod,
   withMainActivity,
   withMainApplication,
@@ -159,6 +160,13 @@ const stringLocales = {
 }
 
 function withRemoteForegroundService(config) {
+  // Keep the fork test APK and the upstream app in distinct Android sandboxes.
+  config = withAppBuildGradle(config, config => {
+    const anchor = /^(\s*)defaultConfig\s*\{/m
+    if (!anchor.test(config.modResults.contents)) throw new Error('Android defaultConfig not found')
+    config.modResults.contents = config.modResults.contents.replace(anchor, '$&\n$1    applicationIdSuffix ".dimatest"')
+    return config
+  })
   config = withAndroidManifest(config, config => {
     const manifest = config.modResults.manifest
     manifest['uses-permission'] ??= []

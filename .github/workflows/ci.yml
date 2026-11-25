@@ -1,288 +1,22 @@
-name: CI
+name: DimAgent fork test APK
 
-# Verification only — signing and TestFlight distribution happen in Xcode
-# Cloud (see docs/ios-xcode-cloud.md).
-#
-# Pushes to any branch keep a fork able to verify without a pull request.
-# Documentation-only changes skip CI entirely, and a v* tag does not run this
-# workflow at all: a tag is the release signal consumed by Xcode Cloud and, on
-# the upstream repository, by release.yml.
 on:
   push:
-    branches:
-      - "**"
-    paths-ignore:
-      - "**.md"
-      - "docs/**"
-  pull_request:
-    paths-ignore:
-      - "**.md"
-      - "docs/**"
+    branches: [release/dima-test.1]
   workflow_dispatch:
 
 permissions:
   contents: read
-  pull-requests: read
-
-concurrency:
-  group: ci-${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
 
 env:
   CI: true
 
 jobs:
-  changes:
-    name: Detect client changes
-    runs-on: ubuntu-latest
-    outputs:
-      android: ${{ steps.detect.outputs.android }}
-      ios: ${{ steps.detect.outputs.ios }}
-    steps:
-      # A branch push needs the commit range to diff, which requires history.
-      # Pull requests read the file list from the API and need no clone.
-      - name: Check out repository
-        if: github.event_name == 'push'
-        uses: actions/checkout@v7
-        with:
-          fetch-depth: 0
-
-      - name: Detect client changes
-        id: detect
-        env:
-          GH_TOKEN: ${{ github.token }}
-          GH_REPO: ${{ github.repository }}
-          PR_NUMBER: ${{ github.event.pull_request.number }}
-          BEFORE_SHA: ${{ github.event.before }}
-        run: |
-          # An explicit manual run always exercises both clients.
-          if [[ "$GITHUB_EVENT_NAME" == "workflow_dispatch" ]]; then
-            echo "android=true" >> "$GITHUB_OUTPUT"
-            echo "ios=true" >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
-
-          if [[ "$GITHUB_EVENT_NAME" == "push" ]]; then
-            # A new branch, or a force push whose parent is gone, has no usable
-            # range. Build both rather than silently skipping verification.
-            if [[ -z "$BEFORE_SHA" || "$BEFORE_SHA" == "0000000000000000000000000000000000000000" ]] \
-              || ! git cat-file -e "${BEFORE_SHA}^{commit}" 2>/dev/null; then
-              echo "android=true" >> "$GITHUB_OUTPUT"
-              echo "ios=true" >> "$GITHUB_OUTPUT"
-              exit 0
-            fi
-            files=$(git diff --name-only "$BEFORE_SHA" "$GITHUB_SHA") || {
-              echo "::error::Failed to diff against $BEFORE_SHA; cannot detect client changes"
-              exit 1
-            }
-          else
-            files=$(gh api --paginate "repos/$GH_REPO/pulls/$PR_NUMBER/files" --jq '.[].filename') || {
-              echo "::error::Failed to list pull request files; cannot detect client changes"
-              exit 1
-            }
-          fi
-
-          android=false
-          ios=false
-          while IFS= read -r file_path; do
-            case "$file_path" in
-              .github/workflows/ci.yml|packages/app-core/*|packages/client-core/*|packages/crypto/*|packages/protocol/*|packages/webrtc/*|patches/*|package.json|pnpm-lock.yaml|pnpm-workspace.yaml)
-                android=true
-                ios=true
-                break
-                ;;
-              apps/android/*)
-                android=true
-                ;;
-              apps/ios/*)
-                ios=true
-                ;;
-            esac
-          done <<< "$files"
-
-          echo "android=$android" >> "$GITHUB_OUTPUT"
-          echo "ios=$ios" >> "$GITHUB_OUTPUT"
-
-
-  quality:
-    name: Check, test, and build
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
-    steps:
-      - name: Check out repository
-        uses: actions/checkout@v7
-
-      - name: Set up pnpm
-        uses: pnpm/action-setup@v6
-        with:
-          version: 9.15.4
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v7
-        with:
-          node-version: 24.22.3
-          cache: pnpm
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Build workspace packages
-        run: pnpm --filter './packages/**' -r build
-
-      - name: Verify committed Plugin bundles
-        run: git diff --exit-code -- packages/plugin/dist/index.js packages/plugin/dist/client.github.js
-
-      - name: Check types
-        run: pnpm -r check
-
-      - name: Lint TypeScript and React
-        run: pnpm exec oxlint --type-aware --quiet packages apps scripts
-
-      - name: Lint shell scripts
-        run: |
-          sh_files=()
-          while IFS= read -r -d '' file_path; do
-            if head -n 1 "$file_path" | grep -q 'zsh'; then
-              continue
-            fi
-            sh_files+=("$file_path")
-          done < <(git ls-files -z '*.sh')
-          if [[ "${#sh_files[@]}" -gt 0 ]]; then
-            shellcheck -S warning "${sh_files[@]}"
-          fi
-
-      - name: Verify GitHub plugin bundle
-        run: |
-          node scripts/verify-dsh-plugin.mjs
-
-      - name: Run tests
-        run: pnpm -r test
-
-      # The HarmonyOS client cannot be built on a GitHub-hosted runner (no HarmonyOS SDK),
-      # but its hand-written Noise IK implementation is plain TypeScript and can be verified
-      # against the repository's golden vectors here. See .github/workflows/harmony-hap.yml
-      # for the signed HAP build that runs on a self-hosted runner.
-      - name: Check HarmonyOS client conformance
-        run: |
-          pnpm exec vitest run apps/harmony/tests
-          node apps/harmony/scripts/check-i18n.mjs
-          node apps/harmony/scripts/bump-version.mjs --check
-
-      # Android prebuild recompiles shared packages. Serialize workspace builds
-      # so Plugin bundling cannot read dist files while tsc rewrites them.
-      - name: Build workspace
-        run: NODE_ENV=production pnpm --workspace-concurrency=1 -r build
-
-      - name: Verify production Plugin bundles
-        run: |
-          git diff --exit-code -- packages/plugin/dist/index.js packages/plugin/dist/client.github.js
-          node scripts/verify-dsh-plugin.mjs
-
-      - name: Verify packed Host WebRTC fallback and installation closure
-        run: node scripts/verify-packed-webrtc.mjs
-
-  xfs-refresh:
-    name: Test credential locks on XFS
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    steps:
-      - uses: actions/checkout@v7
-      - uses: pnpm/action-setup@v6
-        with:
-          version: 9.15.4
-      - uses: actions/setup-node@v7
-        with:
-          node-version: 24.22.3
-          cache: pnpm
-      - run: pnpm install --frozen-lockfile
-      - run: pnpm --filter './packages/**' -r build
-      - name: Mount local XFS
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y xfsprogs
-          truncate -s 512M "$RUNNER_TEMP/refresh-xfs.img"
-          sudo mkfs.xfs -f "$RUNNER_TEMP/refresh-xfs.img"
-          mkdir "$RUNNER_TEMP/refresh-xfs"
-          sudo mount -o loop "$RUNNER_TEMP/refresh-xfs.img" "$RUNNER_TEMP/refresh-xfs"
-          sudo chown "$(id -u):$(id -g)" "$RUNNER_TEMP/refresh-xfs"
-          findmnt -T "$RUNNER_TEMP/refresh-xfs" -o FSTYPE
-          touch "$RUNNER_TEMP/refresh-xfs/source"
-          ln "$RUNNER_TEMP/refresh-xfs/source" "$RUNNER_TEMP/refresh-xfs/linked"
-      - name: Run refresh and migration tests on XFS
-        run: pnpm --dir packages/plugin exec vitest run tests/server-credentials.test.ts tests/identity-store.test.ts
-        env:
-          TMPDIR: ${{ runner.temp }}/refresh-xfs
-
-  plugin-package:
-    name: Package npm plugin
-    needs: quality
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    steps:
-      - name: Check out repository
-        uses: actions/checkout@v7
-
-      - name: Set up pnpm
-        uses: pnpm/action-setup@v6
-        with:
-          version: 9.15.4
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v7
-        with:
-          node-version: 24.22.3
-          cache: pnpm
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Build workspace packages
-        run: pnpm --filter './packages/**' -r build
-
-      - name: Pack npm packages
-        run: |
-          mkdir -p artifacts/packages/root artifacts/packages/workspace
-          pnpm pack --pack-destination "$GITHUB_WORKSPACE/artifacts/packages/root"
-
-          for package_json in packages/*/package.json; do
-            package_dir="${package_json%/package.json}"
-            pnpm --dir "$package_dir" pack --pack-destination "$GITHUB_WORKSPACE/artifacts/packages/workspace"
-          done
-
-      - name: Upload npm packages
-        uses: actions/upload-artifact@v7
-        with:
-          name: dsh-remote-packages-${{ github.sha }}
-          path: artifacts/packages/**/*.tgz
-          if-no-files-found: error
-          retention-days: 14
-
-      - name: Build browser extension
-        run: NODE_ENV=production pnpm --dir apps/browser build
-
-      - name: Package browser extension
-        run: |
-          mkdir -p artifacts/browser
-          cd apps/browser
-          zip -qr "$GITHUB_WORKSPACE/artifacts/browser/dsh-remote-browser-${GITHUB_SHA}.zip" \
-            manifest.json popup.html styles.css media _locales dist
-
-      - name: Upload browser extension
-        uses: actions/upload-artifact@v7
-        with:
-          name: dsh-remote-browser-${{ github.sha }}
-          path: artifacts/browser/dsh-remote-browser-${{ github.sha }}.zip
-          if-no-files-found: error
-          retention-days: 14
-
   android-apk:
-    name: Package Android APK
-    needs:
-      - changes
-      - quality
-    if: needs.changes.outputs.android == 'true'
+    name: Build fork test APK
+    if: github.repository == 'wht-github/ds-harness-remote' && github.ref == 'refs/heads/release/dima-test.1'
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 75
     steps:
       - name: Check out repository
         uses: actions/checkout@v7
@@ -350,13 +84,25 @@ jobs:
             :app:assembleRelease \
             --no-daemon \
             --build-cache \
-            -PreactNativeArchitectures=${{ github.event_name == 'pull_request' && 'arm64-v8a' || 'armeabi-v7a,arm64-v8a' }}
+            -PreactNativeArchitectures=armeabi-v7a,arm64-v8a
 
       - name: Stage APK
         run: |
           mkdir -p artifacts/android
           cp apps/android/android/app/build/outputs/apk/release/app-release.apk \
             artifacts/android/dsh-remote-android.apk
+
+      - name: Verify installable test APK
+        run: |
+          apk=artifacts/android/dsh-remote-android.apk
+          build_tools="$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)"
+          "$build_tools/apksigner" verify --verbose --print-certs "$apk"
+          "$build_tools/aapt" dump badging "$apk" > "$RUNNER_TEMP/apk-badging.txt"
+          grep "^package: name='io.github.liguobao.dshremote.dimatest' versionCode='77' versionName='0.6.9-dima-test.1'" "$RUNNER_TEMP/apk-badging.txt"
+          unzip -Z1 "$apk" > "$RUNNER_TEMP/apk-entries.txt"
+          grep -Fx assets/index.android.bundle "$RUNNER_TEMP/apk-entries.txt"
+          grep '^lib/arm64-v8a/' "$RUNNER_TEMP/apk-entries.txt" > /dev/null
+          grep '^lib/armeabi-v7a/' "$RUNNER_TEMP/apk-entries.txt" > /dev/null
 
       - name: Upload Android APK
         uses: actions/upload-artifact@v7
@@ -365,112 +111,3 @@ jobs:
           path: artifacts/android/dsh-remote-android.apk
           if-no-files-found: error
           retention-days: 14
-
-  ios-build:
-    name: Build iOS (unsigned)
-    needs:
-      - changes
-      - quality
-    if: needs.changes.outputs.ios == 'true'
-    runs-on: macos-latest
-    timeout-minutes: 60
-    steps:
-      - name: Check out repository
-        uses: actions/checkout@v7
-
-      # Expo SDK 57 needs a current Xcode. Rather than pinning a path that may
-      # not exist on a future image, take the runner default and log what is
-      # installed; pod install fails loudly if the toolchain is too old.
-      - name: Show Xcode toolchain
-        run: |
-          xcodebuild -version
-          xcodebuild -showsdks | sed -n '1,12p'
-
-      - name: Set up pnpm
-        uses: pnpm/action-setup@v6
-        with:
-          version: 9.15.4
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v7
-        with:
-          node-version: 24.22.3
-          cache: pnpm
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Build workspace packages
-        run: pnpm --filter './packages/**' -r build
-
-      - name: Check out Intelligent UI renderer source
-        uses: actions/checkout@v7
-        with:
-          repository: dreamfarer-space/deepseek-harness-intelligent-ui
-          # Pinned upstream PR #82 merge commit; update only after auditing the new artifact.
-          ref: f3735efffd823f8c34817f4e8554743ac3276225
-          path: .deps/deepseek-harness-intelligent-ui
-
-      - name: Verify pinned Intelligent UI renderer
-        run: |
-          test "$(git -C .deps/deepseek-harness-intelligent-ui rev-parse HEAD)" = "f3735efffd823f8c34817f4e8554743ac3276225" || { echo '::error::Unexpected renderer source commit'; exit 1; }
-          test "$(git -C .deps/deepseek-harness-intelligent-ui hash-object renderer/renderer.js)" = "ebac4a4c2199383458d4e1fa2121be0e6043c5c0" || { echo '::error::Unexpected renderer file content'; exit 1; }
-
-      - name: Bundle local renderers
-        env:
-          DSH_INTELLIGENT_UI_RENDERER_BUNDLE: ${{ github.workspace }}/.deps/deepseek-harness-intelligent-ui/renderer/renderer.js
-          DSH_REQUIRE_INTELLIGENT_UI: 'true'
-        run: pnpm --filter @dsh-remote/app-core run build:renderers
-
-      - name: Verify bundled renderers
-        env:
-          DSH_REQUIRE_INTELLIGENT_UI: 'true'
-        run: node packages/app-core/scripts/verify-intelligent-ui-renderer.mjs
-
-      # No APPLE_TEAM_ID: app.config.js omits appleTeamId, so the generated
-      # project carries no DEVELOPMENT_TEAM and signing stays off below.
-      - name: Generate iOS project
-        run: pnpm --dir apps/ios exec expo prebuild --platform ios --no-install
-
-      - name: Cache CocoaPods
-        uses: actions/cache@v4
-        with:
-          path: apps/ios/ios/Pods
-          key: ${{ runner.os }}-pods-${{ hashFiles('apps/ios/ios/Podfile.lock') }}
-          restore-keys: ${{ runner.os }}-pods-
-
-      - name: Install CocoaPods
-        env:
-          EXPO_USE_PRECOMPILED_MODULES: '1'
-        # Run from inside apps/ios/ios, matching the layout the Expo Podfile
-        # assumes: its backtick node resolution and use_native_modules! both
-        # evaluate relative to the working directory, and invoking with
-        # --project-directory from the repository root breaks them.
-        working-directory: apps/ios/ios
-        run: pod install
-
-      # The "[CP-User] Build ExpoModulesJSI xcframework" build phase compiles an
-      # SPM package through a nested `xcodebuild -quiet`, which swallows the real
-      # compiler error on failure. Building the slices here surfaces it, and the
-      # build phase then hits its per-slice hash cache.
-      - name: Pre-build ExpoModulesJSI xcframework
-        working-directory: apps/ios
-        run: |
-          JSI_PACKAGE="$(node -p "require('path').dirname(require.resolve('expo-modules-jsi/package.json', { paths: [require('path').dirname(require.resolve('expo/package.json'))] }))")"
-          PODS_ROOT="$PWD/ios/Pods" "${JSI_PACKAGE}/apple/scripts/build-xcframework.sh"
-
-      - name: Build unsigned
-        working-directory: apps/ios/ios
-        run: |
-          set -o pipefail
-          xcodebuild \
-            -workspace DSHRemote.xcworkspace \
-            -scheme DSHRemote \
-            -configuration Release \
-            -destination 'generic/platform=iOS' \
-            -derivedDataPath build \
-            CODE_SIGNING_ALLOWED=NO \
-            CODE_SIGNING_REQUIRED=NO \
-            CODE_SIGN_IDENTITY="" \
-            build \
-            | xcbeautify
