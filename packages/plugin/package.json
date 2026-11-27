@@ -155,9 +155,11 @@
     "@dsh-remote/crypto": "workspace:*",
     "@dsh-remote/protocol": "workspace:*",
     "@dsh-remote/webrtc": "workspace:*",
+    "@types/markdown-it": "^14.1.2",
     "@types/qrcode": "^1.5.5",
     "@types/ws": "^8.18.1",
     "esbuild": "^0.25.0",
+    "markdown-it": "^14.3.3",
     "typescript": "^5.7.3",
     "vitest": "^2.1.8",
     "werift": "0.26.0"

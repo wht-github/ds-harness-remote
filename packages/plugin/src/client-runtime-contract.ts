@@ -1,4 +1,4 @@
-import type { DimaCatalog, DimaHistory, DimaHistoryRequest } from '@dsh-remote/protocol'
+import type { DimaFeatures, DimaOperation, DimaOperationRequest, DimaOperationResult, DimaCatalog, DimaCreateRequest, DimaCreateResult, DimaHistory, DimaHistoryQuery, DimaHistoryRequest, DimaRespondRequest, DimaRespondResult, DimaStatus, DimaSubmitRequest, DimaSubmitResult } from '@dsh-remote/protocol'
 import type { ControlResult } from './control-result.js'
 import { RemoteClientCore } from '@dsh-remote/client-core'
 import type { AcpAuthDiagnostic, CodexAppFrameData, CodexAppStreamClosedData, RemoteWorkspaceTypeDescription } from '@dsh-remote/protocol'
@@ -27,6 +27,8 @@ export interface RemoteHostFeatures {
   sessionFormat?: 3
   codex: boolean
   dima?: boolean
+  dimaInteraction?: boolean
+  dimaFeatures?: DimaFeatures
   cursor: boolean
   antigravity: boolean
   pi?: boolean
@@ -163,9 +165,17 @@ export interface HostAuthorizationControl {
   authorizeHostAsOwned(accessToken: string, account?: string): Promise<unknown>
   authorizeHostWithAccount(email: string, password: string, verification?: AccountVerification): Promise<unknown>
   authorizeHostWithCode(code: string): Promise<unknown>
+  dimaFeatures?(): Promise<DimaFeatures>
+  dimaOperation?<K extends DimaOperation>(operation: K, request: DimaOperationRequest<K>, owner?: string, signal?: AbortSignal): Promise<DimaOperationResult<K>>
   dimaProbe?(): Promise<boolean>
+  dimaInteractionProbe?(): Promise<boolean>
+  dimaCreate?(request: DimaCreateRequest): Promise<DimaCreateResult>
+  dimaSubmit?(request: DimaSubmitRequest): Promise<DimaSubmitResult>
+  dimaStatus?(request: DimaHistoryRequest, owner?: string, signal?: AbortSignal): Promise<DimaStatus>
+  dimaRespond?(request: DimaRespondRequest): Promise<DimaRespondResult>
+  dimaInterrupt?(request: DimaHistoryRequest): Promise<DimaHistoryRequest>
   dimaCatalog?(): Promise<DimaCatalog>
-  dimaHistory?(request: DimaHistoryRequest): Promise<DimaHistory>
+  dimaHistory?(request: DimaHistoryQuery, signal?: AbortSignal): Promise<DimaHistory>
   codexStatus?(): { available: boolean }
   codexCall?(input: unknown, signal?: AbortSignal): Promise<unknown>
   codexRespond?(input: unknown, signal?: AbortSignal): Promise<{ resolved: true }>

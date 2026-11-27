@@ -1,4 +1,4 @@
-import type { AgentAcpFrameData } from '@dsh-remote/protocol'
+import type { AgentAcpFrameData, DimaFeatures } from '@dsh-remote/protocol'
 import type { HandoffPacket } from '../lib/handoff-context'
 import type { AppLanguage, LanguagePreference } from '../locales/i18n'
 import type { AccountMembership, OAuthProviderInfo, OAuthQrPollResult, OAuthQrSession } from '../services/api'
@@ -87,6 +87,8 @@ export interface AppState {
   hostSessionEvents: boolean
   hostWorkspaceGit: boolean
   dimaAvailable: boolean
+  dimaFeatures?: DimaFeatures
+  dimaChatAvailable: boolean
   codexAvailable: boolean
   cursorAvailable: boolean
   antigravityAvailable: boolean
@@ -267,7 +269,7 @@ export function selectCustomAcpBackends(state: Pick<AppState, 'customAcpBackends
 }
 
 export function initialData(): Pick<AppState,
-  'config' | 'account' | 'devices' | 'selectedDevice' | 'connection' | 'hostDescriptor' | 'hostSessionEvents' | 'hostWorkspaceGit' | 'dimaAvailable' | 'codexAvailable' | 'cursorAvailable' | 'antigravityAvailable' | 'piAvailable' | 'opencodeAvailable' | 'claudeAvailable' | 'hermesAvailable' | 'customAcpBackends' | 'workspaceCatalog' | 'workspaces' |
+  'config' | 'account' | 'devices' | 'selectedDevice' | 'connection' | 'hostDescriptor' | 'hostSessionEvents' | 'hostWorkspaceGit' | 'dimaAvailable' | 'dimaChatAvailable' | 'dimaFeatures' | 'codexAvailable' | 'cursorAvailable' | 'antigravityAvailable' | 'piAvailable' | 'opencodeAvailable' | 'claudeAvailable' | 'hermesAvailable' | 'customAcpBackends' | 'workspaceCatalog' | 'workspaces' |
   'favoriteWorkspaces' | 'recentWorkspaces' | 'archivedSessionIds' | 'pinnedSessionIds' | 'sessions' | 'selectedSession' | 'codexReadySessionId' | 'currentWorkSessionIds' | 'messages' | 'sessionModels' | 'modelSelecting' | 'permissionSelecting' | 'agentPresetOptions' | 'agentPresetLoading' | 'agentPresetSelecting' |
   'acpReadOnlySessionId' | 'historyHasMore' | 'historyLoadingOlder' | 'oldestLoadedSeq' | 'transportPreference' | 'authPhase' | 'refreshing' | 'busyAction' | 'error' |
   'connectionProbeOrder' | 'connectionNetworkDetails' | 'reauthRequired' | 'feedbackBySession' | 'commandResult' | 'sessionLifecycles' | 'sessionProjectionSeqs'> {
@@ -283,6 +285,8 @@ export function initialData(): Pick<AppState,
     hostSessionEvents: false,
     hostWorkspaceGit: false,
     dimaAvailable: false,
+    dimaChatAvailable: false,
+    dimaFeatures: undefined,
     codexAvailable: false,
     cursorAvailable: false,
     antigravityAvailable: false,

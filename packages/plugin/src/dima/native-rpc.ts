@@ -21,6 +21,7 @@ export interface DimaOptions {
 const canonicalPath = promisify(realpath.native)
 const MAX_FRAME_BYTES = 8 * 1024 * 1024
 const MAX_READ_BYTES = 32 * 1024 * 1024
+export const unknownOutcome = () => new RpcError('DIMA_OUTCOME_UNKNOWN', 'The DimAgent operation could not be confirmed. Refresh before acting again.')
 export const unavailable = () => new RpcError('DIMA_UNAVAILABLE', 'DimAgent App Server is unavailable.')
 export const invalidReply = () => new RpcError('DIMA_PROTOCOL_ERROR', 'DimAgent returned an invalid response.')
 export const tooLarge = () => new RpcError('DIMA_LIMIT_EXCEEDED', 'DimAgent data exceeds the read limit.')
@@ -58,7 +59,12 @@ async function* frames(stream: Readable, maxFrame = MAX_FRAME_BYTES): AsyncGener
   if (size) throw invalidReply()
 }
 
-type ReadMethod = 'hello' | 'session.catalog' | 'session.branches' | 'session.history'
+type NativeMethod = 'hello' | 'session.catalog' | 'session.branches' | 'session.history' | 'session.history.display'
+  | (typeof import('./actions.js').dimaActionNativeMethods)[number]
+  | (typeof import('./extensions.js').extensionsNativeMethods)[number]
+  | (typeof import('./tasks.js').tasksNativeMethods)[number]
+  | (typeof import('./media.js').mediaNativeMethods)[number]
+  | 'session.create' | 'session.submit' | 'session.input_lookup' | 'session.attach' | 'session.stop' | 'approval.respond'
 
 /** One sequential JSON-RPC connection. No request or endpoint comes from a peer. */
 export class NativeRpc {
@@ -69,17 +75,42 @@ export class NativeRpc {
     this.replies = frames(reader)
   }
 
-  async call(method: ReadMethod, params: Record<string, unknown>): Promise<unknown> {
+  private async frame(): Promise<Record<string, unknown>> {
+    const reply = await this.replies.next()
+    if (reply.done) throw unavailable()
+    const envelope = record(reply.value)
+    if (envelope.jsonrpc !== '2.0') throw invalidReply()
+    return envelope
+  }
+
+  async notification(): Promise<Record<string, unknown>> {
+    const envelope = await this.frame()
+    if ('id' in envelope || typeof envelope.method !== 'string' || 'result' in envelope || 'error' in envelope) throw invalidReply()
+    return envelope
+  }
+
+  requestFrameBytes(method: NativeMethod, params: Record<string, unknown>): number {
+    return Buffer.byteLength(JSON.stringify({ jsonrpc: '2.0', id: this.id + 1, method, params }))
+  }
+
+  async call(method: NativeMethod, params: Record<string, unknown>, onNotification?: (notice: Record<string, unknown>) => void): Promise<unknown> {
     const id = ++this.id
     this.writer.write(JSON.stringify({ jsonrpc: '2.0', id, method, params }) + '\n')
     for (;;) {
-      const reply = await this.replies.next()
-      if (reply.done) throw unavailable()
-      const envelope = record(reply.value)
-      if (envelope.jsonrpc !== '2.0') throw invalidReply()
-      if (!('id' in envelope) && typeof envelope.method === 'string') continue
+      const envelope = await this.frame()
+      if (!('id' in envelope) && typeof envelope.method === 'string' && !('result' in envelope) && !('error' in envelope)) {
+        onNotification?.(envelope)
+        continue
+      }
       if (envelope.id !== id || 'method' in envelope || ('result' in envelope) === ('error' in envelope)) throw invalidReply()
-      if ('error' in envelope) throw new RpcError('DIMA_REQUEST_FAILED', 'DimAgent could not complete the read request.')
+      if ('error' in envelope) {
+        const error = record(envelope.error)
+        const code = error.data && typeof error.data === 'object' && 'appError' in error.data ? error.data.appError : undefined
+        if (code === 'submission_unknown') throw unknownOutcome()
+        if (code === 'question_not_pending') throw new RpcError('DIMA_ACTION_STALE', 'This question is no longer pending on the selected branch.')
+        if (code === 'context_usage_unavailable') throw new RpcError('DIMA_USAGE_UNAVAILABLE', 'Usage is unavailable for this turn.')
+        throw new RpcError('DIMA_REQUEST_FAILED', 'DimAgent could not complete the request.')
+      }
       return envelope.result
     }
   }

@@ -484,6 +484,7 @@ const HarnessPickerModal = memo(function HarnessPickerModal({
   backends,
   customAcpBackends,
   onOpenDima,
+  dimaChatAvailable,
   colors,
   styles,
   onClose,
@@ -494,6 +495,7 @@ const HarnessPickerModal = memo(function HarnessPickerModal({
   backends: AgentBackend[]
   customAcpBackends: readonly string[]
   onOpenDima?: () => void
+  dimaChatAvailable: boolean
   colors: ThemeColors
   styles: DrawerStyles
   onClose: () => void
@@ -538,7 +540,7 @@ const HarnessPickerModal = memo(function HarnessPickerModal({
                   />
                 )
               })}
-              {onOpenDima && <GroupRow label="DimAgent" detail={strings.dima.readOnly} onPress={() => {
+              {onOpenDima && <GroupRow label="DimAgent" detail={dimaChatAvailable ? undefined : strings.dima.readOnly} onPress={() => {
                 onClose()
                 onOpenDima()
               }} />}
@@ -616,6 +618,7 @@ const HostSessionsDrawerBody = memo(function HostSessionsDrawerBody({
   const sessions = useStoreGateSelector(useAppStore, state => state.sessions, gate)
   const recentIds = useStoreGateSelector(useAppStore, state => state.currentWorkSessionIds, gate)
   const dimaAvailable = useStoreGateSelector(useAppStore, state => state.dimaAvailable, gate)
+  const dimaChatAvailable = useStoreGateSelector(useAppStore, state => state.dimaChatAvailable, gate)
   const codexAvailable = useStoreGateSelector(useAppStore, state => state.codexAvailable, gate)
   const cursorAvailable = useStoreGateSelector(useAppStore, state => state.cursorAvailable, gate)
   const antigravityAvailable = useStoreGateSelector(useAppStore, state => state.antigravityAvailable, gate)
@@ -2459,6 +2462,7 @@ const HostSessionsDrawerBody = memo(function HostSessionsDrawerBody({
           visible={harnessPickerOpen}
           backend={backend}
           onOpenDima={connected && dimaAvailable ? onOpenDima : undefined}
+          dimaChatAvailable={dimaChatAvailable}
           backends={backends}
           customAcpBackends={customAcpBackends}
           colors={colors}

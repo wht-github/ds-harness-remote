@@ -5,6 +5,7 @@
 | [产品定位](PRODUCT.md) | 用户路径、仓库边界和设计原则 |
 | [界面设计系统](DESIGN.md) | Android / Desktop 的交互规则；具体 token 以源码为准 |
 | [Plugin 功能设计](plugin/functional-design.md) | 生命周期、业务域、路径隔离与恢复 |
+| [DimAgent 会话与远程操作](dimagent-session.md) | 原生分支与操作语义、DSH 会话展示、Host 管理范围 |
 | [控制面恢复](control-recovery.md) | 共用授权租约，以及 WebRTC / 独立 Relay 的保留条件 |
 | [跨机器对话导入导出](session-transfer.md) | 工作区与会话查询、压缩传输及目标端创建接口 |
 | [DSH Web 局域网交接](dsh-web-lan.md) | Noise 发票、Host 局域网直连与 hostc 路由 |

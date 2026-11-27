@@ -2,7 +2,7 @@ import { hostname } from 'node:os'
 import { existsSync } from 'node:fs'
 import { execFileSync } from 'node:child_process'
 import type { ControlResult } from './control-result.js'
-import { isDimaEndpoint, readDimaControl } from './client-dima-control.js'
+import { isDimaEndpoint, handleDimaControl } from './client-dima-control.js'
 import { resolveConfig, type Config, type ConfigInput, type ResolvedConfig } from './config.js'
 import {
   ClientModeError,
@@ -226,7 +226,7 @@ export class PluginControlRuntime {
       }
       if (this.client !== undefined) return this.client.handleControl(endpoint, payload, signal)
 
-      if (isDimaEndpoint(endpoint)) return ok(await readDimaControl(endpoint, payload, signal, this.host))
+      if (isDimaEndpoint(endpoint)) return ok(await handleDimaControl(endpoint, payload, signal, this.host))
       if (endpoint === 'devices') return ok([])
       if (endpoint === 'host.account.login') {
         if (this.host === undefined) throw new ClientModeError('METHOD_NOT_ALLOWED', 'This plugin is not running as a Host.')

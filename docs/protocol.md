@@ -1064,14 +1064,45 @@ carrier 或 Session 代际不一致时，Desktop Client 必须在选择目标、
 
 ### DimAgent 原生 App Server
 
-Host 连接同一系统用户正在运行的本机 DimAgent App Server，成功协商原生目录、分支与历史方法后，通过 `harness.transport.describe` 声明 `dima.appserver.v1` 与工作区类型 `{ id: "dima.appserver", name: "DimAgent", capability: "dima.appserver.v1", available: true }`。客户端按该能力选择只读浏览器。配置 `dima.enabled: false` 可关闭本机和远程两个入口。
+Host 连接同一系统用户正在运行的本机 DimAgent App Server，成功协商原生目录、分支与历史方法后，通过 `harness.transport.describe` 声明 `dima.appserver.v1` 与工作区类型 `{ id: "dima.appserver", name: "DimAgent", capability: "dima.appserver.v1", available: true }`。支持原生交互的 Host 另行声明 `dima.appserver.interaction.v1`。PC 和移动客户端确认原生工作区及此能力后，开放基础发送、停止与单次审批。新增操作按下列单项能力独立开放。配置 `dima.enabled: false` 可关闭本机和远程两个入口。
 
 | Remote RPC | 参数 | 返回 |
 | --- | --- | --- |
 | `dima.app.catalog` | `{}` | `{ workspaces: [{ cwd, sessions: [{ sessionId, title, branches: string[] }] }] }` |
-| `dima.app.history` | `{ sessionId, branchId }` | `{ sessionId, branchId, messages: [{ role, text }], truncated }` |
+| `dima.app.history` | `{ sessionId, branchId, window?: "recent" }` | `{ sessionId, branchId, messages: [{ role, text }], truncated, lastTurnIssue? }` |
+| `dima.app.create` | `{ cwd, requestId }` | `{ cwd, sessionId, branchId }` |
+| `dima.app.submit` | `{ sessionId, branchId, requestId, text }` | `{ sessionId, branchId, requestId }` |
+| `dima.app.status` | `{ sessionId, branchId }` | `{ sessionId, branchId, running, stopping, approvals? }` |
+| `dima.app.interrupt` | `{ sessionId, branchId }` | `{ sessionId, branchId }` |
+| `dima.app.respond` | `{ sessionId, branchId, requestId, decision: "allow" \| "deny" }` | `{ sessionId, branchId, requestId }` |
 
-工作区路径、会话标识及分支来自 DimAgent。`branches` 首项是原生默认分支。历史按原生顺序展示用户和助手的文本，单次最多读取 8192 个事件，返回上限为 2 MiB；达到边界且仍有历史时返回已读前缀并带上 `truncated: true`。空历史是成功的读取结果；连接、权限、参数和上游读取错误通过 RPC 错误返回。远端调用沿用已认证的 Noise 连接，本机 DSH Web 通过插件控制路由读取同一数据。
+创建仅接受原生目录中已发现的工作区，创建和发送由客户端为每次操作生成 UUID。发送回执表示 DimAgent 已接收输入。客户端通过状态与历史获取执行结果，连接中断时仅刷新读取。停止针对选中的分支。审批条目含原生 `requestId`、工具名 `tool`、理由 `reason` 和完整参数 `input`；决定限于这一条请求。
+
+工作区路径、会话标识及分支来自 DimAgent。`branches` 首项是原生默认分支。历史按原生顺序展示用户和助手的文本，单次最多读取 8192 个事件，返回上限为 2 MiB；达到边界且仍有历史时返回已读前缀并带上 `truncated: true`。交互客户端用 `window: "recent"` 使用原生 `latestTurn` 及 `before` 游标，从固定水位向前取最多四页。超限时保留最近文本并标记 `truncated`。最近窗口内最新回合失败或被停止时，`lastTurnIssue` 携带原生状态 `failed` 或 `cancelled` 以及最多 2048 个字符的详情。空历史是成功的读取结果；连接、权限、参数和上游读取错误通过 RPC 错误返回。远端调用沿用已认证的 Noise 连接，本机 DSH Web 通过插件控制路由读取同一数据。
+
+新版 Host 在同一原生工作区上单独协商各项操作。每项能力名为 `dima.appserver.<操作名>.v1`，远端 RPC 为 `dima.app.<操作名>`；消息只接受该操作的严格 schema。PC 的 `dima.features` 返回所选来源的布尔能力表，新增 PC 控制接口用 `{target, targetDeviceId?, request}` 区分连接目标与业务参数。缺少能力的旧 Host 继续使用上述历史与交互接口。完整入参与回执以[操作注册表](../packages/protocol/src/index.ts)为准。
+
+| 操作 | 用途与边界 |
+| --- | --- |
+| `timeline` | 返回选中分支的原生回合、排序的文本/思考/工具块、活动状态和较早页游标。最新页合并 attach 提供的原生生成进度与历史；游标绑定原设备上的 daemon 实例、会话、分支及固定历史水位。 |
+| `inbox`、`options`、`act` | 读取待答问题、队列、可用操作和配置。写操作使用受限的操作类型与 UUID，按当前分支原生方法表复核。审批继续走 `respond`。 |
+| `mediaRead` | 点击历史图片后，按选中分支中已提交输入的序号、文件标识、媒体类型与偏移读取原生附件。PC 和手机逐块核对回执，并在展示前检查图片类型和 16 MiB 上限。 |
+| `mediaUpload`、`mediaSearch`、`mediaSubmit` | 分块上传图片或长粘贴；在选中会话工作区搜索文件；按输入顺序提交已确认的附件引用与文字。上传绑定设备、daemon 实例、会话和分支。 |
+| `goal`、`goalUpdate`、`tasks`、`taskDetail`、`taskStop` | 从当前会话读取目标、后台命令、成员分支或工作流。停止时校验精确的原生任务标识与来源，再下发原生操作。 |
+| `conversationExport` | 按原生语义导出主分支，格式为 Markdown 或 JSON。完整内容超过单次导出预算时返回错误。 |
+| `extensions`、`setExtension` | 列出当前工作区可见的已安装项。启停前重查本机授权与清单版本，操作回执关联工作区、项目身份、目标状态及操作 UUID。 |
+
+远程启停许可由 Host 用户在本机维护。配置文件位于 `$DSH_HOME/ds-harness-remote/dima-extension-grants.json`，默认路径为 `~/.dsh/ds-harness-remote/dima-extension-grants.json`。请先让 Host 建立标准凭据目录，再在已有目录中创建授权文件；仍固定使用旧凭据根的 Host 需先完成身份迁移。文件最多 64 KiB。在 POSIX 系统上，授权文件和所在目录由当前用户拥有，且禁止组或其他用户写入。缺少有效授权时清单仍可查看。举例，若清单中有 ID 为 `user:review` 的用户 Skill，可使用以下配置。
+
+```json
+{
+  "grants": [
+    { "kind": "skill", "id": "user:review", "source": "user" }
+  ]
+}
+```
+
+使用清单返回的原始 `kind`、`id`、`source`；工作区级项目还需给出该工作区返回的 `cwd`。移除对应条目即可撤销，下一次启停会重新读取文件。安装插件、选择插件实现、配置运行时或修改 MCP 启动命令由 Host 本机处理。[会话展示与 Host 管理范围](design/dimagent-session.md)
 
 ### 跨机器会话传输
 

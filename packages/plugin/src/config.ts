@@ -1,7 +1,24 @@
 import { hostname } from 'node:os'
+import { isAbsolute } from 'node:path'
 import type { Volatile, VolatileSnapshot } from '@deepseek-ai/cordis'
 import s from '@deepseek-ai/schemastery'
 import { z } from 'zod'
+
+/** Host-file policy. Intentionally outside the remotely addressable Cordis settings schema. */
+const extensionId = z.string().min(1).max(8192).refine(value => !/[\u0000-\u001f\u007f]/u.test(value))
+const extensionGrantSchema = z.object({
+  kind: z.enum(['plugin', 'skill', 'mcp']), id: extensionId, source: extensionId,
+  cwd: z.string().min(1).max(32_768).refine(path => isAbsolute(path) && !path.includes('\0')).optional(),
+}).strict().refine(grant => {
+  if (grant.kind === 'plugin') return grant.source === 'plugin'
+  if (grant.source === 'user' || grant.source === 'project') return true
+  return grant.kind === 'skill' && grant.source.startsWith('plugin:') && grant.source.length > 'plugin:'.length
+}, { message: 'Use the native source for a supported, installed extension.' })
+  .refine(grant => (grant.source === 'project') === (grant.cwd !== undefined), {
+  message: 'Project grants require the exact workspace path; user and plugin grants apply across workspaces.',
+})
+export const dimaExtensionPolicySchema = z.object({ grants: z.array(extensionGrantSchema).max(512) }).strict()
+export type DimaExtensionGrant = z.infer<typeof extensionGrantSchema>
 
 export const DEFAULT_REMOTE_SERVER_URL = 'https://dsh.r2049.cn'
 export const DEFAULT_DETACHED_APPROVAL_GRACE_SEC = 300

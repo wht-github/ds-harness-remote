@@ -6,6 +6,7 @@ import { link, lstat, open, realpath, stat, unlink, type FileHandle } from 'node
 import { extname, isAbsolute, join } from 'node:path'
 import { z } from 'zod'
 import { RpcError } from './safe-error.js'
+import { isDimaPolicyUpload } from './dima/extensions-policy.js'
 import { WorkspaceUploadBudget, type UploadReservation } from './workspace-upload-budget.js'
 
 export const WORKSPACE_UPLOAD_BYTES = 20 * 1024 * 1024
@@ -104,6 +105,7 @@ export class WorkspaceUploadHost {
     const root = await realpath(sourceRoot)
     const directory = await stat(root)
     if (!directory.isDirectory()) throw failure('UPLOAD_WORKSPACE_UNAVAILABLE')
+    if (isDimaPolicyUpload(p.name, directory)) throw failure('UPLOAD_INVALID_NAME')
     const reservation = await this.budget.reserve(root, directory.dev, p.sessionId, p.totalBytes)
     const temp = join(root, `.dsh-upload-${randomUUID()}.part`)
     let handle: FileHandle
@@ -236,6 +238,7 @@ export class WorkspaceUploadHost {
     if (await realpath(upload.root) !== upload.root) throw failure('UPLOAD_WORKSPACE_CHANGED')
     const directory = await stat(upload.root)
     if (!directory.isDirectory() || directory.dev !== upload.dev || directory.ino !== upload.ino) throw failure('UPLOAD_WORKSPACE_CHANGED')
+    if (isDimaPolicyUpload(upload.name, directory)) throw failure('UPLOAD_INVALID_NAME')
   }
 
   private async discard(id: string, upload: Upload) {

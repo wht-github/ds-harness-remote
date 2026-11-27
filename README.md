@@ -153,7 +153,7 @@ You can also edit Harness and plugin settings on the remote host. Available opti
 
 ## Native DimAgent workspaces
 
-Run `dima` as the same user as the Harness Host and keep its App Server running. Choose **DimAgent** in the DSH Web Remote workspace picker or on a connected Android client to browse existing sessions, select a branch, and read its conversation history. For a custom product home, set the Host’s `DIMCODE_HOME` to the same directory. Set `dima.enabled: false` in the plugin configuration to disable this integration.
+Run `dima` as the same user as the Harness Host and keep its App Server running. Choose **DimAgent** in the DSH Web Remote workspace picker or on a connected Android client to open a session and select a branch. With an interactive Host, you can create sessions in a listed workspace, send messages, follow replies, stop the selected branch and allow or deny individual tool requests. When the daemon advertises the corresponding tools, the session view also shows live text, thinking and tool results, pending questions and queued inputs. You can steer the current turn, manage branches, attach images or workspace files, open images from earlier messages, and inspect session tasks. The Host owner can grant remote toggles for individual installed plugins, Skills and MCP entries. Earlier Hosts continue to provide history. For a custom product home, set the Host’s `DIMCODE_HOME` to the same directory. Set `dima.enabled: false` in the plugin configuration to disable this integration.
 
 ## Experimental ACP workspaces
 

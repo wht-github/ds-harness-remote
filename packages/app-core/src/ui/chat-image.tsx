@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useMemo, useState } from 'react'
+import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { ActivityIndicator, Image, Modal, Pressable, StyleSheet, Text, View } from 'react-native'
 import { strings } from '../locales/i18n'
 import type { ChatImage } from '../types'
@@ -49,15 +49,23 @@ export function ChatImageView({ image, remoteSource = false }: { image: ChatImag
             <Text numberOfLines={2} style={{ color: colors.muted }}>{label}</Text>
           </View>}
     </Pressable>
-    <Modal visible={expanded && current?.uri !== undefined} transparent onRequestClose={() => setExpanded(false)}>
-      <View style={styles.backdrop}>
-        <Pressable accessibilityRole="button" accessibilityLabel={strings.common.close} onPress={() => setExpanded(false)} style={styles.close}>
-          <Text style={styles.closeText}>{strings.common.close}</Text>
-        </Pressable>
-        {current?.uri && <Image accessibilityLabel={label} source={{ uri: current.uri }} resizeMode="contain" style={styles.full} onError={fail} />}
-      </View>
-    </Modal>
+    <ChatImagePreview visible={expanded && current?.uri !== undefined} label={label} uri={current?.uri}
+      onClose={() => setExpanded(false)} onError={fail} />
   </View>
+}
+
+/** Render the same native full-screen image surface for a locally selected or Host-backed image. */
+export function ChatImagePreview({ visible, uri, label, onClose, onError, children }: {
+  visible: boolean; uri?: string; label: string; onClose: () => void; onError: () => void; children?: ReactNode
+}) {
+  return <Modal visible={visible} transparent onRequestClose={onClose}>
+    <View style={styles.backdrop}>
+      <Pressable accessibilityRole="button" accessibilityLabel={strings.common.close} onPress={onClose} style={styles.close}>
+        <Text style={styles.closeText}>{strings.common.close}</Text>
+      </Pressable>
+      {uri ? <Image accessibilityLabel={label} source={{ uri }} resizeMode="contain" style={styles.full} onError={onError} /> : children}
+    </View>
+  </Modal>
 }
 
 const styles = StyleSheet.create({

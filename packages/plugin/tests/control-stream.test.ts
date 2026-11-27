@@ -1,5 +1,6 @@
 import { runScenarios } from '../../../scripts/test-scenarios.mjs'
-import { createServer, type Server } from 'node:http'
+import { createServer, request, type Server } from 'node:http'
+import { MAX_SECURE_MESSAGE_BYTES } from '@dsh-remote/protocol'
 import type { IncomingMessage, ServerResponse } from 'node:http'
 import type { AddressInfo } from 'node:net'
 import type { ControlResult } from '../src/control-result.js'
@@ -237,6 +238,54 @@ describe('loopback status event stream', () => {
 
     expect(route.registered).toBe(false)
     await expect(fetch(`${base}${STATUS_STREAM_PATH}`)).resolves.toMatchObject({ status: 404 })
+  })
+
+  it('bounds declared and chunked DimAgent bodies before dispatch and accepts exactly four MiB', async () => {
+    const route = captureRoute()
+    const handler = vi.fn(async () => ({ ok: true as const, value: {} }))
+    const dispose = registerControlRoute(connectionHandle(), handler, route.webServer)
+    const base = await listen(route.handle)
+    const url = base + CONTROL_RPC_PREFIX
+    const json = (method: string) => JSON.stringify({ type: 'client-request', method, rpcId: 'byte-test', payload: {} })
+    const body = json('dima.status').padEnd(MAX_SECURE_MESSAGE_BYTES, ' ')
+    const headers = { 'content-type': 'application/json' }
+    try {
+      expect((await fetch(url + '/dima.status', { method: 'POST', headers, body })).status).toBe(200)
+      expect((await fetch(url + '/dima.status', { method: 'POST', headers, body: body + ' ' })).status).toBe(413)
+      const chunked = await new Promise<number | undefined>((resolve, reject) => {
+        const post = request(url + '/dima.status', { method: 'POST', headers }, response => {
+          response.resume()
+          resolve(response.statusCode)
+        })
+        post.on('error', reject)
+        post.write(body)
+        post.end(' ')
+      })
+      expect(chunked).toBe(413)
+      expect((await fetch(url + '/status', { method: 'POST', headers, body: json('status').padEnd(MAX_SECURE_MESSAGE_BYTES + 1, ' ') })).status).toBe(200)
+      expect(handler).toHaveBeenCalledTimes(2)
+    } finally { await dispose() }
+  })
+
+  it('cancels a DimAgent operation when the caller disconnects after posting a complete request', async () => {
+    const route = captureRoute()
+    let started!: (signal: AbortSignal) => void
+    const dispatched = new Promise<AbortSignal>(resolve => { started = resolve })
+    const dispose = registerControlRoute(connectionHandle(), async (_endpoint, _payload, signal) => {
+      started(signal)
+      await new Promise<void>(resolve => signal.addEventListener('abort', () => resolve(), { once: true }))
+      return { ok: true, value: {} }
+    }, route.webServer)
+    const base = await listen(route.handle)
+    const post = request(base + CONTROL_RPC_PREFIX + '/dima.status', { method: 'POST', headers: { 'content-type': 'application/json' } })
+    post.on('error', () => {}) // Closing a pending HTTP request resets the local socket.
+    try {
+      post.end(JSON.stringify({ type: 'client-request', rpcId: 'close-test', method: 'dima.status', payload: {} }))
+      const signal = await dispatched
+      expect(signal.aborted).toBe(false)
+      post.destroy()
+      await vi.waitFor(() => expect(signal.aborted).toBe(true))
+    } finally { post.destroy(); await dispose() }
   })
 
   it('streams the control runtime status and ends it with the control route', async () => {

@@ -429,6 +429,7 @@ export interface AskUserQuestionItem {
   header?: string
   options?: AskUserQuestionOption[]
   multiSelect?: boolean
+  allowCustom?: boolean
   intent?: { kind: 'plan-review'; approve: string }
 }
 

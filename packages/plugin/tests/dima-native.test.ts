@@ -4,6 +4,7 @@ import path from 'node:path'
 import { Readable, Writable } from 'node:stream'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { DimaAppServer } from '../src/dima/app-server.js'
+import { RpcError } from '../src/safe-error.js'
 import * as native from '../src/dima/native-rpc.js'
 
 const cwd = path.resolve('DimAgent test workspace')
@@ -27,6 +28,76 @@ function replay(results: unknown[]) {
 afterEach(() => vi.restoreAllMocks())
 
 describe('native DimAgent read authority', () => {
+  it('negotiates branch reads independently of submit and rejects unavailable writes before calling a native method', async () => {
+    const partial = { ...hello, features: [...hello.features, 'session.methods', 'session.attach.expectedCwd'] }
+    const calls = replay([partial, partial])
+    const server = new DimaAppServer()
+    try {
+      expect(await server.features()).toMatchObject({ read: true, interaction: false, inbox: true, options: true,
+        mediaSearch: true, mediaSubmit: false, mediaUpload: false, extensions: false, timeline: false })
+      await expect(server.mediaSubmit({ ...request, requestId: 'c8d6a373-2031-4d94-a238-8811e54f045c', mode: 'queue',
+        parts: [{ type: 'text', text: 'draft' }] }, 'device')).rejects.toMatchObject({ code: 'FEATURE_NOT_SUPPORTED' })
+      expect(calls.map(call => call.method)).toEqual(['hello', 'hello'])
+    } finally { server.dispose() }
+  })
+
+  it('keeps a recent verified handshake through transient load only until its original deadline', async () => {
+    let now = 20_000
+    vi.spyOn(Date, 'now').mockImplementation(() => now)
+    replay([hello])
+    const server = new DimaAppServer()
+    try {
+      expect(await server.probe()).toBe(true)
+      vi.mocked(native.withNativeRpc).mockRejectedValue(new RpcError('RATE_LIMITED', 'Busy'))
+      now += 3000
+      expect(await server.probe()).toBe(true)
+      now += 8000
+      expect(await server.probe()).toBe(false)
+    } finally { server.dispose() }
+  })
+
+  it('serves concurrent device reads in bounded native slots and discards disconnected waiters', async () => {
+    let resume!: () => void
+    const busy = new Promise<void>(resolve => { resume = resolve })
+    const connections = vi.spyOn(native, 'withNativeRpc').mockImplementation(async () => { await busy; throw native.unavailable() })
+    const server = new DimaAppServer()
+    const keep = new AbortController()
+    const disconnected = new AbortController()
+    const read = (signal: AbortSignal) => server.inbox(request, 'phone', signal).catch(error => error.code)
+    try {
+      const first = Array.from({ length: 4 }, () => read(keep.signal))
+      await vi.waitFor(() => expect(connections).toHaveBeenCalledTimes(4))
+      const cancelled = read(disconnected.signal)
+      const waiting = read(keep.signal)
+      disconnected.abort()
+      expect(await cancelled).toBe('TRANSPORT_CLOSED')
+      expect(connections).toHaveBeenCalledTimes(4)
+      resume()
+      await Promise.all([...first, waiting])
+      expect(connections).toHaveBeenCalledTimes(5)
+    } finally { resume(); server.dispose() }
+  })
+
+  it('reads new replies across whole native batches at one fixed head, including a terminal failure', async () => {
+    const head = 30_000
+    const batch = Array.from({ length: 130 }, (_, offset) => ({ sequence: head - 130 + offset, type: 'step', name: 'thinking' }))
+    const ended = { sequence: head, type: 'turn', name: 'end', data: { status: 'failed', error: 'provider unavailable' } }
+    const first = { ...page([...batch, ended], head), nextBefore: head - 130 }
+    const earlier = { ...page([
+      input(head - 140, [{ type: 'text', text: 'latest input' }]), text(head - 135, 'new '),
+      input(head - 134, [{ type: 'text', text: 'queued' }]), text(head - 132, 'reply'),
+    ], head - 131, head), nextBefore: head - 200 }
+    const calls = replay([hello, catalog, branches, first, earlier])
+    expect(await new DimaAppServer().history({ ...request, window: 'recent' })).toEqual({ ...request, truncated: true,
+      messages: [{ role: 'user', text: 'latest input' }, { role: 'assistant', text: 'new reply' }, { role: 'user', text: 'queued' }],
+      lastTurnIssue: { status: 'failed', detail: 'provider unavailable' },
+    })
+    expect(calls.slice(-2).map(c => c.params)).toEqual([
+      { ...request, latestTurn: true, limit: 128 },
+      { ...request, before: head - 130, through: head, limit: 128 },
+    ])
+  })
+
   it('probes only the versioned hello and requires all three read capabilities', async () => {
     const calls = replay([hello])
     const server = new DimaAppServer()
@@ -138,5 +209,126 @@ describe('native DimAgent NDJSON', () => {
   ])('rejects %s using a non-sensitive error', async (_name, data, code) => {
     const rpc = new native.NativeRpc(Readable.from([Buffer.from(data)]), sink())
     await expect(rpc.call('hello', {})).rejects.toMatchObject({ code, message: expect.not.stringContaining('secret') })
+  })
+})
+
+describe('native v4 branch interaction contract (arcships/dim v0.1.0-alpha.29)', () => {
+  const target = { sessionId: 's1', branchId: 'feature' }
+  const cwd = process.cwd()
+  const owner = 'device-1'
+  const question = { ...target, requestId: 'approval-1', reason: 'Review fixture operation', call: { name: 'sample', input: { value: '中' } } }
+  const state = { ...target, running: true, stopping: false }
+  const notice = (method: string, params: unknown) => ({ jsonrpc: '2.0', method, params })
+
+  function fixture() {
+    const feed: Array<Record<string, unknown>> = []
+    const calls: { method: string; params: Record<string, unknown> }[] = []
+    let pending: typeof question | undefined = structuredClone(question)
+    let instanceId = 'daemon-a'
+    let status = { ...state }
+    let features = [...hello.features, 'session.create', 'session.submit', 'session.input_lookup', 'session.stop', 'session.attach.expectedCwd', 'session.history.latestTurn']
+    const nativeError = new Error('unavailable')
+    const invoke = vi.fn(async (method: string, params: Record<string, unknown>) => {
+      calls.push({ method, params })
+      switch (method) {
+        case 'hello': return { ...hello, features, instanceId }
+        case 'session.catalog': return { sessions: [{ sessionId: target.sessionId, cwd }] }
+        case 'session.branches': return { defaultBranchId: 'main', branches: ['main', 'feature'].map(branchId => ({ branchId, state: 'open' })) }
+        case 'session.attach':
+          feed.length = 0
+          expect(params).toEqual({ sessionId: target.sessionId, expectedCwd: cwd })
+          feed.push(notice('approval.request', { ...question, branchId: 'main', requestId: 'sibling-approval' }))
+          if (pending) feed.push(notice('approval.request', pending))
+          feed.push(notice('session.state', { ...state, branchId: 'main', running: false }), notice('session.state', status))
+          return { sessionId: target.sessionId, cwd }
+        case 'approval.respond':
+          expect(params).toMatchObject({ ...target, requestId: pending?.requestId })
+          pending = undefined
+          return {}
+        case 'session.stop': return { sequence: 19 }
+        case 'session.input_lookup': return { status: 'unknown' }
+        case 'session.submit': throw nativeError
+        case 'session.create': throw nativeError
+        default: throw new Error('Unexpected test RPC ' + method)
+      }
+    })
+    vi.spyOn(native, 'withNativeRpc').mockImplementation(async (_options, signal, run) => {
+      const rpc = {
+        call: invoke,
+        notification: async () => {
+          const frame = feed.shift()
+          if (frame) return frame
+          await new Promise<void>(resolve => signal.addEventListener('abort', () => resolve(), { once: true }))
+          throw nativeError
+        },
+      }
+      return run(rpc as unknown as native.NativeRpc)
+    })
+    return { server: new DimaAppServer(), calls,
+      setPending: (value: typeof pending) => { pending = value },
+      setStatus: (value: typeof state) => { status = value },
+      replaceDaemon: () => { instanceId = 'daemon-b' },
+      readOnly: () => { features = [...hello.features] },
+    }
+  }
+
+  it.each(['allow', 'deny'] as const)('binds complete pending details, owner and branch to a single %s', async decision => {
+    const f = fixture()
+    const approval = { ...target, requestId: question.requestId, decision }
+    expect(await f.server.interactionAvailable()).toBe(true)
+    expect(f.calls.map(c => c.method)).toEqual(['hello'])
+    await expect(f.server.respond(approval, owner)).rejects.toMatchObject({ code: 'DIMA_APPROVAL_STALE' })
+    expect(await f.server.status(target, owner)).toEqual({ ...state, approvals: [{ requestId: question.requestId, tool: 'sample', reason: question.reason, input: JSON.stringify(question.call.input) }] })
+    await expect(f.server.respond(approval, 'another-device')).rejects.toMatchObject({ code: 'DIMA_APPROVAL_STALE' })
+    await expect(f.server.respond({ ...approval, requestId: 'sibling-approval' }, owner)).rejects.toMatchObject({ code: 'DIMA_APPROVAL_STALE' })
+    f.setPending({ ...question, call: { name: 'sample', input: { value: 'changed' } } })
+    await expect(f.server.respond(approval, owner)).rejects.toMatchObject({ code: 'DIMA_APPROVAL_STALE' })
+    await f.server.status(target, owner)
+    f.replaceDaemon()
+    await expect(f.server.respond(approval, owner)).rejects.toMatchObject({ code: 'DIMA_APPROVAL_STALE' })
+    await f.server.status(target, owner)
+    await expect(f.server.respond(approval, owner)).resolves.toEqual({ ...target, requestId: question.requestId })
+    await expect(f.server.respond(approval, owner)).rejects.toMatchObject({ code: 'DIMA_APPROVAL_STALE' })
+    expect(f.calls.filter(c => c.method === 'approval.respond')).toEqual([{ method: 'approval.respond', params: approval }])
+  })
+
+  it('refuses an approval with incomplete display and aborts a missing selected state on disposal', async () => {
+    const f = fixture()
+    f.setPending({ ...question, call: { name: 'sample', input: { value: 'x'.repeat(40_000) } } })
+    await expect(f.server.status(target, owner)).rejects.toMatchObject({ code: 'DIMA_APPROVAL_TOO_LARGE' })
+    await expect(f.server.interrupt(target, owner)).resolves.toEqual(target)
+    expect(f.calls.filter(c => c.method === 'session.stop')).toEqual([{ method: 'session.stop', params: target }])
+    f.setPending(undefined)
+    f.setStatus({ ...state, branchId: 'main' })
+    const missing = expect(f.server.status(target, owner)).rejects.toMatchObject({ code: 'DIMA_UNAVAILABLE' })
+    await new Promise(resolve => setImmediate(resolve))
+    f.server.dispose()
+    await missing
+    expect(await f.server.interactionAvailable()).toBe(false)
+    expect(f.calls.some(c => c.method === 'approval.respond')).toBe(false)
+  })
+
+  it('deduplicates in-flight and unknown creates/submissions without repeating the mutation', async () => {
+    const f = fixture()
+    const requestId = '00112233-4455-4677-8899-aabbccddeeff'
+    const submit = { ...target, requestId, text: 'once only' }
+    const outcomes = await Promise.allSettled([f.server.submit(submit, owner), f.server.submit(submit, owner)])
+    expect(outcomes).toEqual(Array(2).fill({ status: 'rejected', reason: expect.objectContaining({ code: 'DIMA_OUTCOME_UNKNOWN' }) }))
+    await expect(f.server.submit({ ...submit, text: 'different' }, owner)).rejects.toMatchObject({ code: 'DIMA_REQUEST_CONFLICT' })
+    await expect(f.server.submit(submit, owner)).rejects.toMatchObject({ code: 'DIMA_OUTCOME_UNKNOWN' })
+    for (let i = 0; i < 2; i++) await expect(f.server.create({ cwd, requestId }, owner)).rejects.toMatchObject({ code: 'DIMA_OUTCOME_UNKNOWN' })
+    expect(f.calls.filter(c => c.method === 'session.create')).toHaveLength(1)
+    expect(f.calls.filter(c => c.method === 'session.submit')).toEqual([{ method: 'session.submit', params: { ...target, submissionId: requestId, mode: 'queue', text: submit.text } }])
+    await expect(f.server.create({ cwd: path.dirname(cwd), requestId: 'a0112233-4455-4677-8899-aabbccddeeff' }, owner)).rejects.toMatchObject({ code: 'DIMA_NOT_FOUND' })
+    expect(f.calls.filter(c => c.method === 'session.create')).toHaveLength(1)
+  })
+
+  it('negotiates read-only support separately and never writes or attaches without the interaction features', async () => {
+    const f = fixture()
+    f.readOnly()
+    expect(await f.server.probe()).toBe(true)
+    expect(await f.server.interactionAvailable()).toBe(false)
+    await expect(f.server.interrupt(target, owner)).rejects.toMatchObject({ code: 'DIMA_INCOMPATIBLE' })
+    expect(f.calls.every(c => c.method === 'hello')).toBe(true)
   })
 })

@@ -3,6 +3,7 @@ import {
   ATTENTION_INBOX_CAPABILITY,
   ATTENTION_SIGNAL_CAPABILITY,
   DIMA_CAPABILITY,
+  DIMA_INTERACTION_CAPABILITY, dimaFeatures, dimaOperationTimeoutMs,
   DSH_WEB_CAPABILITY,
   DSH_WEB_LAN_CAPABILITY,
   DSH_WEB_LAN_IPV6_CAPABILITY,
@@ -97,6 +98,8 @@ export class AndroidRemoteConnection {
   private cursor?: AgentAcpClient
   private acpBackends = new Set<string>()
   private dimaAvailable = false
+  private nativeDimaFeatures = dimaFeatures([])
+  private dimaChatAvailable = false
   private codexAvailable = false
   private sessionTools?: HarnessSessionTools
   private closeMux?: (notifyRemote?: boolean) => Promise<void>
@@ -239,6 +242,7 @@ export class AndroidRemoteConnection {
         this.pushWakeSupported = false
         this.attentionClient = undefined
         this.dimaAvailable = false
+        this.dimaChatAvailable = false
         this.codexAvailable = false
         this.cursor = undefined
         this.acpBackends.clear()
@@ -373,6 +377,10 @@ export class AndroidRemoteConnection {
     this.attentionClient = createRemoteAttentionClient(createAttentionRpcTransport(core))
     this.dshWeb = features.capabilities.includes(DSH_WEB_CAPABILITY)
     this.dimaAvailable = remoteWorkspaceTypeAvailable(features.capabilities, features.workspaceTypes, 'dima.appserver', DIMA_CAPABILITY)
+    const nativeCapabilities = features.workspaceTypes === undefined ? [DIMA_CAPABILITY] : features.capabilities
+    this.nativeDimaFeatures = dimaFeatures(this.dimaAvailable ? nativeCapabilities : [])
+    this.dimaChatAvailable = this.dimaAvailable && features.workspaceTypes !== undefined
+      && features.capabilities.includes(DIMA_INTERACTION_CAPABILITY)
     this.codexAvailable = features.capabilities.includes('codex.appserver.transfer.v1')
       && remoteWorkspaceTypeAvailable(features.capabilities, features.workspaceTypes, 'codex', 'codex.appserver.v1')
     if (this.codexAvailable) this.codex ??= new CodexRemoteClient(core, true)
@@ -489,6 +497,8 @@ export class AndroidRemoteConnection {
 
   async rpc<T = unknown>(method: string, params: unknown, signal?: AbortSignal): Promise<T> {
     if (this.core === undefined) throw new Error(strings.runtime.connectHostFirst)
+    const timeoutMs = dimaOperationTimeoutMs(method, params)
+    if (timeoutMs !== undefined) return this.core.rpc<T>(method, params, signal, { timeoutMs })
     return this.lanUploads ? this.lanUploads.rpc<T>(method, params, signal) : this.core.rpc<T>(method, params, signal)
   }
 
@@ -549,6 +559,12 @@ export class AndroidRemoteConnection {
 
   hasDima(): boolean {
     return this.core !== undefined && this.dimaAvailable
+  }
+
+  getDimaFeatures() { return this.hasDima() ? this.nativeDimaFeatures : undefined }
+
+  hasDimaChat(): boolean {
+    return this.hasDima() && this.dimaChatAvailable
   }
 
   hasCodex(): boolean {
@@ -738,6 +754,7 @@ export class AndroidRemoteConnection {
     this.proxy = undefined
     this.codex = undefined
     this.dimaAvailable = false
+    this.dimaChatAvailable = false
     this.codexAvailable = false
     this.workspaceGitSupported = false
     this.attentionInboxSupported = false

@@ -2,6 +2,24 @@
   "name": "capability-negotiation",
   "cases": [
     {
+      "name": "dima-peer-selects-individual-operations-and-keeps-the-base-workspace",
+      "operation": "selectCapabilities",
+      "input": {
+        "offered": ["dima.appserver.v1", "dima.appserver.timeline.v1", "dima.appserver.mediaRead.v1", "dima.appserver.tasks.v1"],
+        "supported": ["dima.appserver.v1", "dima.appserver.timeline.v1", "dima.appserver.mediaRead.v1", "dima.appserver.taskStop.v1"]
+      },
+      "expect": { "accepted": true, "value": ["dima.appserver.v1", "dima.appserver.timeline.v1", "dima.appserver.mediaRead.v1"] }
+    },
+    {
+      "name": "read-only-dima-client-negotiates-history-with-an-interactive-host",
+      "operation": "selectCapabilities",
+      "input": {
+        "offered": ["dima.appserver.v1", "dima.appserver.interaction.v1"],
+        "supported": ["dima.appserver.v1"]
+      },
+      "expect": { "accepted": true, "value": ["dima.appserver.v1"] }
+    },
+    {
       "name": "dima-client-selects-native-app-server",
       "operation": "selectCapabilities",
       "input": {

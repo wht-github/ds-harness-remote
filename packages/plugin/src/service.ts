@@ -12,7 +12,7 @@ import { WorkspaceUploadBudget } from './workspace-upload-budget.js'
 import { resolveSessionWorkspaceRoot, workspaceUploadRootResolver } from './workspace-upload-authority.js'
 import { LoopbackHost } from './loopback-host.js'
 import { TerminalPolicy } from './terminal-policy.js'
-import { createEvent, REMOTE_SESSION_EVENTS_CAPABILITY, type DimaHistoryRequest, type RemoteWorkspaceTypeDescription } from '@dsh-remote/protocol'
+import { createEvent, dimaFeatures, isDimaOperation, parseDimaOperationRequest, parseDimaOperationResult, REMOTE_SESSION_EVENTS_CAPABILITY, type DimaFeatures, type DimaOperation, type DimaOperationRequest, type DimaOperationResult, type DimaCreateRequest, type DimaSubmitRequest, type DimaRespondRequest, type DimaHistoryQuery, type DimaHistoryRequest, type RemoteWorkspaceTypeDescription } from '@dsh-remote/protocol'
 import { ConnectionController } from './connection-controller.js'
 import type { ResolvedConfig } from './config.js'
 import type { HostIdentity, IdentityStore } from './identity-store.js'
@@ -95,7 +95,7 @@ export class HostPluginRuntime {
   private closed = false
   private readonly detachedApprovalBudget = new DetachedApprovalBudget()
   private readonly attention: HostAttentionTracker
-  private readonly dima = new DimaAppServer()
+  private dima = new DimaAppServer()
   private readonly codex: CodexRemoteDomain
   private readonly acp: AcpRemoteGateway
   private readonly codexWorkspaceState = new CodexWorkspaceState(key => TerminalPolicy.releaseOwner(this.terminalOwners, key))
@@ -290,7 +290,7 @@ export class HostPluginRuntime {
           context.connectionId,
           event => send(createEvent('attention.follow.event', event)),
         ),
-        this,
+        { host: this, owner: `device:${context.peerDeviceId}` },
       )
     }, this.logger)
     if (config.serverUrl !== undefined) {
@@ -316,6 +316,10 @@ export class HostPluginRuntime {
       await Promise.all([this.codex.reconfigure(config.codex), this.acp.reconfigure(config.acp ?? { enabled: false, backends: [] })])
       if (codexChanged) await this.codexWorkspaceState.dispose()
       this.config.codex = config.codex
+      if (config.dima?.enabled === false && this.config.dima?.enabled !== false) {
+        this.dima.dispose()
+        this.dima = new DimaAppServer()
+      }
       this.config.dima = config.dima
     })
     this.backendUpdate = update
@@ -559,16 +563,54 @@ export class HostPluginRuntime {
     return revoked
   }
 
+  async dimaFeatures(): Promise<DimaFeatures> {
+    if (this.closed || this.config.dima?.enabled === false) return dimaFeatures([])
+    return this.dima.features()
+  }
+
+  async dimaOperation<K extends DimaOperation>(name: K, request: DimaOperationRequest<K>, owner = 'loopback', signal?: AbortSignal): Promise<DimaOperationResult<K>> {
+    signal?.throwIfAborted()
+    if (!isDimaOperation(name)) throw new RpcError('METHOD_NOT_FOUND', 'Unknown DimAgent operation.')
+    const server: { [P in DimaOperation]: (params: DimaOperationRequest<P>, owner: string, signal?: AbortSignal) => Promise<DimaOperationResult<P>> } = this.requireDima()
+    const result = await server[name](parseDimaOperationRequest(name, request), owner, signal)
+    signal?.throwIfAborted()
+    return parseDimaOperationResult(name, request, result)
+  }
+
   async dimaProbe(): Promise<boolean> {
     return !this.closed && this.config.dima?.enabled !== false && await this.dima.probe()
+  }
+
+  async dimaInteractionProbe(): Promise<boolean> {
+    return !this.closed && this.config.dima?.enabled !== false && await this.dima.interactionAvailable()
+  }
+
+  dimaCreate(request: DimaCreateRequest, owner = 'loopback') {
+    return this.requireDima().create(request, owner)
+  }
+
+  dimaSubmit(request: DimaSubmitRequest, owner = 'loopback') {
+    return this.requireDima().submit(request, owner)
+  }
+
+  dimaStatus(request: DimaHistoryRequest, owner = 'loopback', signal?: AbortSignal) {
+    return this.requireDima().status(request, owner, signal)
+  }
+
+  dimaRespond(request: DimaRespondRequest, owner = 'loopback') {
+    return this.requireDima().respond(request, owner)
+  }
+
+  dimaInterrupt(request: DimaHistoryRequest, owner = 'loopback') {
+    return this.requireDima().interrupt(request, owner)
   }
 
   dimaCatalog() {
     return this.requireDima().catalog()
   }
 
-  dimaHistory(request: DimaHistoryRequest) {
-    return this.requireDima().history(request)
+  dimaHistory(request: DimaHistoryQuery, signal?: AbortSignal) {
+    return this.requireDima().history(request, signal)
   }
 
   private requireDima(): DimaAppServer {
@@ -635,6 +677,7 @@ export class HostPluginRuntime {
   async close(): Promise<void> {
     if (this.closed) return
     this.closed = true
+    this.dima.dispose()
     this.pairing?.close()
     await this.attention.close()
     await this.serverConnection?.stop()

@@ -8,6 +8,13 @@ import {
   BINARY_UPLOAD_CAPABILITY,
   DIMA_CAPABILITY,
   DIMA_RPC_METHODS,
+  dimaCapabilities,
+  isDimaOperation,
+  parseDimaOperationRequest,
+  dimaCreateRequestSchema,
+  dimaRespondRequestSchema,
+  dimaSubmitRequestSchema,
+  dimaHistoryQuerySchema,
   dimaHistoryRequestSchema,
   LAN_UPLOAD_CAPABILITY,
   attentionAckUnreadRequestSchema,
@@ -135,6 +142,7 @@ export interface RemoteCompactionRoute {
 
 export class RpcRouter {
   private active = 0
+  private readonly dimaConnection = new AbortController()
 
   constructor(
     private readonly maxPending = 128,
@@ -157,10 +165,14 @@ export class RpcRouter {
     private readonly sameLinkIpv6Endpoints?: AuthenticatedPeerChannel['sameLinkIpv6Endpoints'],
     private readonly workspaceGit?: WorkspaceGitHost,
     private readonly attention?: AttentionPeerRoute,
-    private readonly dima?: Pick<HostPluginRuntime, 'dimaProbe' | 'dimaCatalog' | 'dimaHistory'>,
+    private readonly dima?: {
+      host: Pick<HostPluginRuntime, 'dimaFeatures' | 'dimaOperation' | 'dimaCatalog' | 'dimaHistory' | 'dimaCreate' | 'dimaSubmit' | 'dimaStatus' | 'dimaInterrupt' | 'dimaRespond'>
+      owner: string
+    },
   ) {}
 
   async closePeerStreams(): Promise<void> {
+    this.dimaConnection.abort()
     this.lanWeb?.dispose()
     this.attention?.close()
     this.loopback?.closeAll()
@@ -194,7 +206,7 @@ export class RpcRouter {
     const startedAt = performance.now()
     try {
       const result = await this.invoke(request.payload.method, request.payload.params)
-      const subMethod = !request.payload.method.startsWith('session.transfer.') && typeof (request.payload.params as Record<string, unknown> | undefined)?.method === 'string'
+      const subMethod = !request.payload.method.startsWith('session.transfer.') && !request.payload.method.startsWith('dima.app.') && typeof (request.payload.params as Record<string, unknown> | undefined)?.method === 'string'
         ? String((request.payload.params as Record<string, unknown>).method)
         : undefined
       this.logger?.info('host rpc ok', {
@@ -208,6 +220,7 @@ export class RpcRouter {
       const failedEndpoint = !request.payload.method.startsWith('workspace.upload.')
         && !request.payload.method.startsWith('workspace.git.')
         && !request.payload.method.startsWith('session.transfer.')
+        && !request.payload.method.startsWith('dima.app.')
         && typeof (request.payload.params as Record<string, unknown> | undefined)?.endpoint === 'string'
         ? String((request.payload.params as Record<string, unknown>).endpoint)
         : undefined
@@ -227,6 +240,13 @@ export class RpcRouter {
   }
 
   private async invoke(method: string, params: unknown): Promise<unknown> {
+    if (method.startsWith('dima.app.')) {
+      const name = method.slice('dima.app.'.length)
+      if (isDimaOperation(name)) {
+        const { host, owner } = this.requireDima()
+        return host.dimaOperation(name, parseDimaOperationRequest(name, params), owner, this.dimaConnection.signal)
+      }
+    }
     switch (method) {
       case 'dsh.web.lan.direct.open':
       case 'dsh.web.lan.direct.close':
@@ -243,9 +263,9 @@ export class RpcRouter {
         return { closed: true }
       case 'harness.transport.describe': {
         const { sameLinkIpv6Pair } = z.object({ sameLinkIpv6Pair: sameLinkIpv6PairSchema.optional() }).strict().parse(params)
-        const [describedCapabilities, dimaAvailable] = await Promise.all([
+        const [describedCapabilities, dima] = await Promise.all([
           this.capabilities(),
-          this.dima?.dimaProbe().catch(() => false),
+          this.dima?.host.dimaFeatures().catch(() => undefined),
         ])
         const hostCapabilities = describedCapabilities.filter(capability => capability !== BINARY_UPLOAD_CAPABILITY && capability !== LAN_UPLOAD_CAPABILITY)
         const remoteAvailable = hostCapabilities.includes('harness.remote.v1') || hostCapabilities.includes('harness.remote.v3')
@@ -260,7 +280,7 @@ export class RpcRouter {
           ...(this.dshWeb?.available() ? [DSH_WEB_CAPABILITY] : []),
           ...(this.transportUpgrade === undefined ? [] : [TRANSPORT_UPGRADE_CAPABILITY]),
           ...(this.attention === undefined ? [] : [ATTENTION_INBOX_CAPABILITY]),
-          ...(dimaAvailable ? [DIMA_CAPABILITY] : []),
+          ...(dima ? dimaCapabilities(dima) : []),
         ])]
         let workspaceTypes: RemoteWorkspaceTypeDescription[] | undefined
         if (this.workspaceTypes !== undefined) {
@@ -270,7 +290,7 @@ export class RpcRouter {
             workspaceTypes = []
           }
         }
-        if (dimaAvailable) {
+        if (dima?.read) {
           workspaceTypes ??= []
           workspaceTypes.push({ id: 'dima.appserver', name: 'DimAgent', capability: DIMA_CAPABILITY, available: true })
         }
@@ -323,9 +343,29 @@ export class RpcRouter {
       }
       case 'dima.app.catalog':
         emptyParamsSchema.parse(params)
-        return this.requireDima().dimaCatalog()
+        return this.requireDima().host.dimaCatalog()
       case 'dima.app.history':
-        return this.requireDima().dimaHistory(dimaHistoryRequestSchema.parse(params))
+        return this.requireDima().host.dimaHistory(dimaHistoryQuerySchema.parse(params), this.dimaConnection.signal)
+      case 'dima.app.create': {
+        const { host, owner } = this.requireDima()
+        return host.dimaCreate(dimaCreateRequestSchema.parse(params), owner)
+      }
+      case 'dima.app.submit': {
+        const { host, owner } = this.requireDima()
+        return host.dimaSubmit(dimaSubmitRequestSchema.parse(params), owner)
+      }
+      case 'dima.app.status': {
+        const { host, owner } = this.requireDima()
+        return host.dimaStatus(dimaHistoryRequestSchema.parse(params), owner, this.dimaConnection.signal)
+      }
+      case 'dima.app.respond': {
+        const { host, owner } = this.requireDima()
+        return host.dimaRespond(dimaRespondRequestSchema.parse(params), owner)
+      }
+      case 'dima.app.interrupt': {
+        const { host, owner } = this.requireDima()
+        return host.dimaInterrupt(dimaHistoryRequestSchema.parse(params), owner)
+      }
       case 'codex.app.call': return this.requireCodex().call(params)
       case 'codex.app.respond': return this.requireCodex().respond(params)
       case 'codex.app.stream.open': return this.requireCodex().openStream(params)

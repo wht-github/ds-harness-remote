@@ -46,6 +46,7 @@ export interface RemoteStatus {
     pluginRoute?: boolean
     codex?: boolean
     dima?: boolean
+    dimaInteraction?: boolean
     cursor?: boolean
     antigravity?: boolean
     pi?: boolean
@@ -314,6 +315,7 @@ export type ClientReact = {
   Fragment: unknown
   createElement(type: unknown, props?: Record<string, unknown> | null, ...children: unknown[]): unknown
   useEffect(effect: () => void | (() => void), deps: unknown[]): void
+  useLayoutEffect?(effect: () => void | (() => void), deps: unknown[]): void
   useCallback<T>(callback: T, deps: unknown[]): T
   useMemo<T>(factory: () => T, deps: unknown[]): T
   useRef<T>(initial: T): { current: T }

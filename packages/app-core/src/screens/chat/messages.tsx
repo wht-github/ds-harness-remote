@@ -1,7 +1,7 @@
 import { heartbeatMessageBody } from '../../ui/heartbeat-message'
 import { ChatImageView } from '../../ui/chat-image'
 import { ArrowRightLeft, ArrowUp, Bot, Check, CircleCheck, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Code2, FilePenLine, FileSearch, HelpCircle, ListTree, RefreshCw, ShieldAlert, Sparkles, Terminal, Wrench, User, X } from 'lucide-react-native'
-import { memo, useEffect, useMemo, useRef, useState } from 'react'
+import { createContext, memo, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import {
   AccessibilityInfo,
   ActivityIndicator,
@@ -394,6 +394,18 @@ export const MarkdownChunkRow = memo(function MarkdownChunkRow({
   return true
 })
 
+export const ActivityExpansionMemory = createContext<Set<string> | undefined>(undefined)
+
+function useActivityExpansion(key: string): [boolean, () => void] {
+  const memory = useContext(ActivityExpansionMemory)
+  const [expanded, setExpanded] = useState(() => memory?.has(key) ?? false)
+  return [expanded, () => {
+    if (expanded) memory?.delete(key)
+    else memory?.add(key)
+    setExpanded(!expanded)
+  }]
+}
+
 export const ChatActivityGroup = memo(function ChatActivityGroup({ items, closed, dense = false, busyAction, onApproval, onQuestion }: {
   items: ChatItem[]
   closed: boolean
@@ -405,7 +417,7 @@ export const ChatActivityGroup = memo(function ChatActivityGroup({ items, closed
   const { colors } = useTheme()
   const styles = useThemedStyles(createStyles)
   const { height } = useWindowDimensions()
-  const [open, setOpen] = useState(false)
+  const [open, toggleOpen] = useActivityExpansion('group:' + items[0]?.id)
   const body = useRef<ScrollView>(null)
   const pending = items.some(item => (item.kind === 'approval' || item.kind === 'question') && item.outcome === undefined)
   const expanded = pending || open
@@ -433,7 +445,7 @@ export const ChatActivityGroup = memo(function ChatActivityGroup({ items, closed
   return <View style={styles.activityGroup}>
     <Pressable accessibilityRole="button" accessibilityLabel={detail === undefined ? label : `${label} · ${detail}`}
       accessibilityState={{ expanded, disabled: pending }} disabled={pending}
-      onPress={() => setOpen(value => !value)}
+      onPress={toggleOpen}
       hitSlop={{ top: 7, bottom: 7 }}
       style={({ pressed }) => [styles.processHeader, dense && { minHeight: 32 }, pressed && styles.reasoningHeaderPressed]}>
       <View style={styles.processIcon}><ActivityIcon size={15} color={running ? colors.primary : colors.muted} /></View>
@@ -949,7 +961,7 @@ function ToolRow({ item: original, compact }: { item: ToolActivity; compact: boo
   }
   const { colors } = useTheme()
   const styles = useThemedStyles(createStyles)
-  const [expanded, setExpanded] = useState(false)
+  const [expanded, toggleExpanded] = useActivityExpansion('tool:' + item.id)
   const stateText = item.state === 'running' ? zhCN.status.running : item.state === 'failed' ? zhCN.chat.failed : zhCN.chat.completed
   const detail = processDetail(item)
   const name = toolDisplayName(item)
@@ -961,7 +973,7 @@ function ToolRow({ item: original, compact }: { item: ToolActivity; compact: boo
         accessibilityLabel={hasDetail ? (expanded ? zhCN.chat.toolCollapse(name) : zhCN.chat.toolExpand(name)) : undefined}
         accessibilityState={hasDetail ? { expanded } : undefined}
         disabled={!hasDetail}
-        onPress={() => {if (!expanded) void loadDetail(); setExpanded(value => !value)}}
+        onPress={() => {if (!expanded) void loadDetail(); toggleExpanded()}}
         style={({ pressed }) => [styles.toolRow, pressed && hasDetail && styles.toolRowPressed]}
       >
         <View style={styles.toolIcon}>
@@ -1053,7 +1065,8 @@ function compactActivityText(value: string | undefined): string | undefined {
   return compact.length === 0 ? undefined : compact
 }
 
-function ApprovalCard({ item, busy, onRespond }: {
+export function ApprovalCard({ item, busy, onRespond, input }: {
+  input?: string
   item: ApprovalActivity
   busy?: boolean
   onRespond: (itemId: string, outcome: 'allowed-once' | 'rejected') => Promise<void>
@@ -1087,6 +1100,8 @@ function ApprovalCard({ item, busy, onRespond }: {
           <Text selectable style={styles.permissionText}>{item.reason}</Text>
         </View>
       )}
+      {input !== undefined && <View style={styles.permissionDetail}><Text style={styles.permissionKind}>{zhCN.dima.toolInput}</Text>
+        <Text selectable style={styles.permissionText}>{input}</Text></View>}
       <Text style={styles.permissionScope}>{zhCN.chat.permissionScope}</Text>
       <View style={styles.permissionActions}>
         <Button label={zhCN.chat.allowOnce} variant="inverse" onPress={() => void onRespond(item.id, 'allowed-once')} loading={isBusy} />
@@ -1096,7 +1111,8 @@ function ApprovalCard({ item, busy, onRespond }: {
   )
 }
 
-function QuestionCard({ item, busy, onRespond }: {
+export function QuestionCard({ item, busy, onRespond, onDecline }: {
+  onDecline?: () => void
   item: QuestionActivity
   busy?: boolean
   onRespond: (itemId: string, selected: Record<string, string[]>, custom?: Record<string, string>) => Promise<void>
@@ -1153,6 +1169,7 @@ function QuestionCard({ item, busy, onRespond }: {
       </View>
       {item.questions.map(question => (
         <View key={question.id} style={styles.questionBlock}>
+          {!!question.header && <Text style={styles.permissionKind}>{question.header}</Text>}
           <Text style={styles.questionText}>{question.question}</Text>
           {question.detail !== undefined && question.detail.trim().length > 0 && <Text selectable style={styles.questionDetail}>{question.detail}</Text>}
           {(question.options ?? []).map(option => {
@@ -1175,7 +1192,7 @@ function QuestionCard({ item, busy, onRespond }: {
               </Pressable>
             )
           })}
-          <TextInput
+          {question.allowCustom !== false && <TextInput
             style={styles.questionCustom}
             accessibilityLabel={zhCN.chat.questionCustomPlaceholder}
             placeholder={zhCN.chat.questionCustomPlaceholder}
@@ -1190,9 +1207,10 @@ function QuestionCard({ item, busy, onRespond }: {
               setCustom(current => ({ ...current, [question.id]: text }))
             }}
             multiline
-          />
+          />}
         </View>
       ))}
+      {onDecline && <Button label={zhCN.dima.decline} variant="secondary" disabled={isBusy} onPress={onDecline} />}
       <Button label={zhCN.chat.submitAnswer} variant="inverse" onPress={() => void onRespond(item.id, selected, custom)} loading={isBusy} disabled={!allAnswered || (item.questionState === 'open' && remaining === 0)} />
     </View>
   )

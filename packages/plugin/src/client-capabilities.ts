@@ -1,5 +1,5 @@
 import { RemoteClientCore, remoteWorkspaceTypeAvailable } from '@dsh-remote/client-core'
-import { DIMA_CAPABILITY, MAX_REMOTE_CAPABILITY_ENTRIES, parseRemoteWorkspaceTypes } from '@dsh-remote/protocol'
+import { dimaFeatures, DIMA_CAPABILITY, MAX_REMOTE_CAPABILITY_ENTRIES, parseRemoteWorkspaceTypes } from '@dsh-remote/protocol'
 import type { RemoteHostFeatures } from './client-runtime-contract.js'
 import { ClientModeError, isRecord } from './client-runtime-contract.js'
 
@@ -44,6 +44,9 @@ export async function probeRemoteHostFeatures(
   const available = (id: string, capability: string) => remoteWorkspaceTypeAvailable(value.capabilities as string[], workspaceTypes, id, capability)
   const codex = available('codex', 'codex.appserver.v1')
   const dima = available('dima.appserver', DIMA_CAPABILITY)
+  // A legacy capability-only descriptor can browse; new operations require a native workspace declaration.
+  const nativeCapabilities = workspaceTypes === undefined ? [DIMA_CAPABILITY] : value.capabilities
+  const dimaProfile = dimaFeatures(dima ? nativeCapabilities : [])
   const cursor = available('cursor', 'agent.acp.cursor.v1')
   const antigravity = available('antigravity', 'agent.acp.antigravity.v1')
   const pi = available('pi', 'agent.acp.pi.v1')
@@ -67,7 +70,8 @@ export async function probeRemoteHostFeatures(
     remoteGateway,
     ...(sessionFormat === undefined ? {} : { sessionFormat }),
     codex,
-    ...(dima ? { dima: true } : {}),
+    ...(dima ? { dima: true, dimaFeatures: dimaProfile } : {}),
+    ...(dimaProfile.interaction ? { dimaInteraction: true } : {}),
     cursor,
     antigravity,
     ...(pi ? { pi: true } : {}),

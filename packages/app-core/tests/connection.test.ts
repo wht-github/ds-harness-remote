@@ -2,7 +2,7 @@ vi.mock('expo', () => ({ requireOptionalNativeModule: () => undefined }))
 import { runScenarios, scenarioName } from '../../../scripts/test-scenarios.mjs'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { AdaptiveTransportOptions } from '@dsh-remote/webrtc'
-import { DIMA_CAPABILITY } from '@dsh-remote/protocol'
+import { DIMA_CAPABILITY, DIMA_INTERACTION_CAPABILITY } from '@dsh-remote/protocol'
 
 class FakeCore {
   private readonly closeHandlers = new Set<() => void>()
@@ -505,25 +505,43 @@ afterEach(async () => {
       await connection.connect('https://server.example.com', identity, host, 'synthetic', () => undefined)
       expect(connection.isDimaOnly()).toBe(true)
       expect(connection.hasDima()).toBe(true)
+      expect(connection.hasDimaChat()).toBe(false)
       expect(connection.acpBackendIds()).toEqual([])
       expect(() => connection.requireProxy()).toThrow()
       expect(testState.cores[0]?.rpcCalls.map(call => call.method)).toEqual(['harness.transport.describe'])
 
-      testState.capabilities = ['harness.remote.v1', acp.capability, DIMA_CAPABILITY]
+      testState.capabilities = ['harness.remote.v1', acp.capability, DIMA_CAPABILITY, DIMA_INTERACTION_CAPABILITY, 'dima.appserver.timeline.v1']
       testState.workspaceTypes = [acp, native]
       await connection.connect('https://server.example.com', identity, host, 'synthetic', () => undefined)
       expect(connection.isDimaOnly()).toBe(false)
       expect(connection.hasDima()).toBe(true)
+      expect(connection.hasDimaChat()).toBe(true)
+      expect(connection.getDimaFeatures()).toMatchObject({read:true, interaction:true, timeline:true, act:false})
       expect(connection.acpBackendIds()).toEqual([acp.id])
+
+      testState.capabilities = [DIMA_CAPABILITY, 'dima.appserver.inbox.v1', 'dima.appserver.options.v1', 'dima.appserver.act.v1', 'dima.appserver.mediaSearch.v1']
+      await connection.refreshBackends()
+      expect(connection.hasDimaChat()).toBe(false)
+      expect(connection.getDimaFeatures()).toMatchObject({read:true, interaction:false, inbox:true, options:true, act:true, mediaSearch:true})
+
+      testState.capabilities = ['harness.remote.v1', acp.capability, DIMA_CAPABILITY, DIMA_INTERACTION_CAPABILITY, 'dima.appserver.timeline.v1']
+      testState.workspaceTypes = undefined
+      await connection.refreshBackends()
+      expect(connection.hasDima()).toBe(true)
+      expect(connection.hasDimaChat()).toBe(false)
+
+      expect(connection.getDimaFeatures()).toMatchObject({read:true, interaction:false, timeline:false})
 
       testState.workspaceTypes = [acp, { ...native, available: false }]
       await connection.refreshBackends()
       expect(connection.hasDima()).toBe(false)
+      expect(connection.hasDimaChat()).toBe(false)
       expect(connection.acpBackendIds()).toEqual([acp.id])
     } finally {
       await connection.close()
     }
     expect(connection.hasDima()).toBe(false)
+    expect(connection.hasDimaChat()).toBe(false)
   })
 
   it('preserves CodeX capability discovery for Hosts without workspaceTypes', async () => {

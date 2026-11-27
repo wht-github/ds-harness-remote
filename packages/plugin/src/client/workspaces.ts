@@ -1,6 +1,8 @@
 import { useAccountVerification } from './account-verification.js'
 import { mountAccountEntry } from './account-entry.js'
-import { createDimaBrowser, type DimaSource } from './dima-browser.js'
+import { createDimaBrowser, dimaSourceConnection, DimaBrowserMemory, type DimaSource } from './dima-browser.js'
+import type { DimaMainSelection } from './dima-main-panel.js'
+import type { DimaLanguage } from './dima-controls-view.js'
 import { watchFooterLane, type FooterForm } from './footer-lane.js'
 import { createHostPairingPanel } from './pairing.js'
 import { createServerNotice } from './server-notice.js'
@@ -97,6 +99,8 @@ export function createRemoteWorkspaceAction(React: ClientReact, portal?: PortalR
     sidebarEntry: SidebarEntryPreference
     portal?: PortalRenderer
     t: Translate
+    openDimaMain?: (selection: DimaMainSelection) => boolean
+    dimaLanguage?: DimaLanguage
     openSettings?: () => void
   }): unknown {
     const { t } = props
@@ -110,8 +114,14 @@ export function createRemoteWorkspaceAction(React: ClientReact, portal?: PortalR
     }
     const [open, setOpen] = React.useState(false)
     const [dimaSource, setDimaSource] = React.useState<DimaSource | undefined>(undefined)
+    const openDima = (source: DimaSource, sourceName: string) => {
+      if (props.openDimaMain?.({ source, sourceName })) setOpen(false)
+      else setDimaSource(source)
+    }
+    const [dimaMemory] = React.useState(() => new DimaBrowserMemory())
     const [localDimaAvailable, setLocalDimaAvailable] = React.useState(false)
     const [status, setStatus] = React.useState<RemoteStatus | undefined>(undefined)
+    const dimaConnection = dimaSource && dimaSourceConnection(dimaSource, status)
     const [devices, setDevices] = React.useState<RemoteDevice[]>([])
     const [discoveryUnavailable, setDiscoveryUnavailable] = React.useState(false)
     const [selectedHost, setSelectedHost] = React.useState<RemoteDevice | undefined>(undefined)
@@ -1336,8 +1346,11 @@ export function createRemoteWorkspaceAction(React: ClientReact, portal?: PortalR
         className: 'dshRemoteBackdrop',
         role: 'presentation',
         onMouseDown: (event: MouseEvent) => { if (event.target === event.currentTarget) setOpen(false) },
-      }, dimaSource !== undefined ? React.createElement(DimaBrowser, {
-        source: dimaSource, sourceName: dimaSource.target === 'local' ? t('connectionRouteCurrentDevice') : selectedHost?.name ?? t('host'),
+      }, dimaSource && (dimaSource.target === 'local' || (dimaSource.targetDeviceId === selectedHost?.deviceId
+        && status?.connected && dimaSource.targetDeviceId === status.connectedTargetDeviceId && status.remoteFeatures?.dima)) ? React.createElement(DimaBrowser, {
+        key: JSON.stringify([dimaSource, dimaConnection]), source: dimaSource, connection: dimaConnection, memory: dimaMemory, lang: props.dimaLanguage,
+        interactionAvailable: dimaSource.target === 'local' || status?.remoteFeatures?.dimaInteraction === true,
+        sourceName: dimaSource.target === 'local' ? t('connectionRouteCurrentDevice') : selectedHost?.name ?? t('host'),
         control: props.control, t, onBack: () => setDimaSource(undefined), onClose: () => setOpen(false),
       }) : React.createElement('section', {
         className: `dshRemotePage${selectedHost === undefined ? '' : ' hasSelectedHost'}`,
@@ -1377,7 +1390,7 @@ export function createRemoteWorkspaceAction(React: ClientReact, portal?: PortalR
             React.createElement('button', { type: 'button', className: 'dshRemotePageClose', onClick: () => setOpen(false), 'aria-label': t('close') }, '×'))),
         React.createElement('main', { className: 'dshRemotePageBody' },
           selectedHost === undefined && localDimaAvailable ? React.createElement('button', {
-            type: 'button', className: 'dshDimaEntry', onClick: () => setDimaSource({ target: 'local' }),
+            type: 'button', className: 'dshDimaEntry', onClick: () => openDima({ target: 'local' }, t('connectionRouteCurrentDevice')),
           }, t('dimaHistoryTitle', { source: t('connectionRouteCurrentDevice') })) : null,
           status?.mode === 'remote' ? React.createElement('button', {
             type: 'button',
@@ -1705,7 +1718,7 @@ export function createRemoteWorkspaceAction(React: ClientReact, portal?: PortalR
                       status?.remoteFeatures?.dima && status.connectedTargetDeviceId === selectedHost.deviceId
                         ? React.createElement('button', {
                           type: 'button', className: 'dshDimaEntry', disabled: busy,
-                          onClick: () => setDimaSource({ target: 'remote', targetDeviceId: selectedHost.deviceId }),
+                          onClick: () => openDima({ target: 'remote', targetDeviceId: selectedHost.deviceId }, selectedHost.name ?? t('host')),
                         }, t('dimaHistoryTitle', { source: selectedHost.name })) : null,
                       !codexAvailable ? null : React.createElement('section', { className: 'dshRemoteCodexWorkspaceGroup' },
                         React.createElement('div', {

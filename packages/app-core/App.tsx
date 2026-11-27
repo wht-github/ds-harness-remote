@@ -854,7 +854,7 @@ function AppNavigator() {
           />
         )
       case 'dima':
-        return <DimaScreen route={entry} onBack={index > 0 ? pop : () => reset({ name: 'remote-hosts' })} onOpenHistory={(history, title) => {
+        return <DimaScreen key={JSON.stringify([entry.scope, entry.history?.sessionId, entry.history?.branchId])} active={active} route={entry} onBack={index > 0 ? pop : () => reset({ name: 'remote-hosts' })} onOpenHistory={(history, title) => {
           push({ name: 'dima', scope: entry.scope, history, title })
         }} />
       case 'settings':

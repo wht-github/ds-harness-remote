@@ -1,4 +1,5 @@
 import type { IncomingHttpHeaders, IncomingMessage, ServerResponse } from 'node:http'
+import { MAX_SECURE_MESSAGE_BYTES } from '@dsh-remote/protocol'
 import type { ControlResult } from './control-result.js'
 
 /** Namespaced loopback RPC prefix shared by the Host runtime and browser UI. */
@@ -12,6 +13,7 @@ export const STATUS_STREAM_PATH = `${CONTROL_RPC_PREFIX}/${STATUS_STREAM_ENDPOIN
 
 const ENDPOINT_SEGMENT_PATTERN = /^[A-Za-z0-9_$.-]+$/
 const INVALID_REQUEST_RPC_ID = 'invalid-request'
+class ControlBodyTooLarge extends Error {}
 
 interface HostConnectionHandleLike {
   requestRejection?(request: { headers: IncomingHttpHeaders }): number | undefined
@@ -118,10 +120,17 @@ async function handleControlRequest(
     return
   }
 
+  const isDima = endpoint.startsWith('dima.')
   let body: unknown
   try {
-    body = await readJsonBody(req)
-  } catch {
+    body = await readJsonBody(req, isDima ? MAX_SECURE_MESSAGE_BYTES : undefined)
+  } catch (error) {
+    if (error instanceof ControlBodyTooLarge) {
+      // Drain in-flight bytes so a peer still uploading can receive its 413.
+      req.resume()
+      writeText(res, 413, 'DimAgent request body is too large')
+      return
+    }
     writeText(res, 400, 'body is not JSON')
     return
   }
@@ -144,11 +153,19 @@ async function handleControlRequest(
     return
   }
 
+  const lifetime = isDima ? new AbortController() : undefined
+  const onDisconnect = () => { if (!res.writableEnded) lifetime?.abort() }
+  if (lifetime) {
+    if (res.destroyed) return
+    res.once('close', onDisconnect)
+  }
   try {
-    const result = await handler(endpoint, message.payload, requestSignal(req))
-    writeJson(res, 200, fullResponse(message.rpcId, result))
+    const result = await handler(endpoint, message.payload, lifetime?.signal ?? requestSignal(req))
+    if (!lifetime?.signal.aborted) writeJson(res, 200, fullResponse(message.rpcId, result))
   } catch (error) {
-    writeText(res, 500, `handler failure: ${String(error)}`)
+    if (!lifetime?.signal.aborted) writeText(res, 500, `handler failure: ${String(error)}`)
+  } finally {
+    if (lifetime) res.off('close', onDisconnect)
   }
 }
 
@@ -167,10 +184,19 @@ function contentType(headers: IncomingHttpHeaders): string | undefined {
   return value?.split(';', 1)[0]?.trim().toLowerCase()
 }
 
-async function readJsonBody(req: IncomingMessage): Promise<unknown> {
+async function readJsonBody(req: IncomingMessage, maxBytes?: number): Promise<unknown> {
+  if (maxBytes !== undefined && Number(req.headers['content-length']) > maxBytes) throw new ControlBodyTooLarge()
   const chunks: Buffer[] = []
-  for await (const chunk of req) chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk))
-  return JSON.parse(Buffer.concat(chunks).toString('utf8'))
+  let bytes = 0
+  // Keep the socket available for a 413 when a chunked upload crosses the limit.
+  const source = maxBytes === undefined ? req : req.iterator({ destroyOnReturn: false })
+  for await (const chunk of source) {
+    const buffer = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk)
+    bytes += buffer.length
+    if (maxBytes !== undefined && bytes > maxBytes) throw new ControlBodyTooLarge()
+    chunks.push(buffer)
+  }
+  return JSON.parse(Buffer.concat(chunks, bytes).toString('utf8'))
 }
 
 function requestSignal(req: IncomingMessage): AbortSignal {

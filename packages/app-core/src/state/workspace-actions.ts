@@ -228,6 +228,8 @@ export function createWorkspaceActions({ set, get, connection, getConnectionGene
         set(state => ({
           hostWorkspaceGit: connection.hasWorkspaceGit?.() ?? false,
           dimaAvailable: connection.hasDima?.() === true,
+          dimaChatAvailable: connection.hasDimaChat?.() === true,
+          dimaFeatures: connection.getDimaFeatures?.(),
           codexAvailable: connection.hasCodex(),
           cursorAvailable: connection.hasCursor(),
           antigravityAvailable: connection.hasAntigravity(),

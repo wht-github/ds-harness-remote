@@ -868,6 +868,7 @@ function fakeChannel(
 
 function config(): ResolvedConfig {
   return {
+    dima: { enabled: false },
     terminal: { enabled: false },
     httpServerAllowlist: [],
     sidebar: { entry: 'standard' },

@@ -155,7 +155,7 @@ Harness 主机无需开放公网监听端口。只要能够访问互联网，就
 
 ## DimAgent 原生工作区
 
-在 Host 上以运行 Harness 的同一用户启动 `dima`，保持 App Server 运行。打开 DSH Web 的 Remote 工作区选择器，或在 Android 应用中连接此 Host，选择 **DimAgent** 即可浏览已有会话、切换分支和阅读对话历史。使用自定义产品目录时，让 Host 的 `DIMCODE_HOME` 指向相同目录。可通过插件配置 `dima.enabled: false` 关闭。
+在 Host 上以运行 Harness 的同一用户启动 `dima`，保持 App Server 运行。打开 DSH Web 的 Remote 工作区选择器，或在 Android 应用中连接此 Host，选择 **DimAgent** 即可打开会话、切换分支。支持交互的 Host 还可以在已列出的工作区新建会话，向选中分支发消息、查看回复、停止该分支，以及逐次允许或拒绝工具请求。新版会话页按 daemon 能力展示生成中的正文、思考、工具结果、待答问题和排队输入，可向当前轮次追加指令、管理分支、附上图片或工作区文件、点开历史消息中的图片，以及查看会话任务。Host 用户可逐项授权远端启停已安装的插件、Skill 和 MCP。旧版 Host 仍可浏览历史。使用自定义产品目录时，让 Host 的 `DIMCODE_HOME` 指向相同目录。可通过插件配置 `dima.enabled: false` 关闭。
 
 ## 实验性 ACP 工作区
 

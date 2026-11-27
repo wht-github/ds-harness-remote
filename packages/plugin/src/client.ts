@@ -26,6 +26,7 @@ import type {
   WorkspacesClientServiceLike,
 } from './client/types.js'
 import { createRemoteWorkspaceAction } from './client/workspaces.js'
+import { createDimaMainPanel, type DimaMainSelection } from './client/dima-main-panel.js'
 import { CONTROL_RPC_PREFIX, STATUS_STREAM_PATH } from './control-route.js'
 import { createPluginRouteCatalogGuard, createPluginRouteFetch } from './plugin-route-client.js'
 import {
@@ -701,6 +702,23 @@ window.__ModuleLoader__.load({
         locale: localeNamespace,
         inject: () => ({ control, statusFeed, onSignIn: openRemote, inline: !nativeTitlebar }),
       }, RemoteSessionHeaderAction))
+      const dima = createDimaMainPanel(React)
+      type Layout = { selectPanel(id: string | null): void }
+      const dimaLanguage = () => {
+        const code: string = ctx.locale.getLocale().active
+        return code === 'zh' || code === 'ru' || code === 'uk' ? code : 'en'
+      }
+      ctx.slots.inject('main', () => ctx.slots.register({
+        name: 'main', key: dima.panelId, id: dima.panelId, locale: localeNamespace,
+        inject: () => ({ control, statusFeed, lang: dimaLanguage(), close: () => { dima.select(undefined); ctx.get<Layout>('layout')?.selectPanel(null) } }),
+      }, dima.Panel))
+      const openDimaMain = (selection: DimaMainSelection): boolean => {
+        const layout = ctx.get<Layout>('layout')
+        if (!layout?.selectPanel) return false
+        try { layout.selectPanel(dima.panelId) } catch { return false }
+        dima.select(selection)
+        return true
+      }
       ctx.slots.inject('sidebar.footer.action', () => ctx.slots.register({
         name: 'sidebar.footer.action',
         id: 'ds-harness-remote-workspace',
@@ -714,6 +732,7 @@ window.__ModuleLoader__.load({
           statusFeed,
           subscribeOpen,
           openSettings: undefined,
+          openDimaMain, dimaLanguage: dimaLanguage(),
           preferredQrProvider: ctx.locale.getLocale().active === 'zh' ? 'zhihu' : 'github',
           sidebarEntry,
           portal,

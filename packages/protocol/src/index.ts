@@ -34,7 +34,17 @@ import {
 } from './attention.js'
 export * from './attention.js'
 export * from './dima.js'
-import { DIMA_RPC_METHODS } from './dima.js'
+export * from './dima-timeline.js'
+export * from './dima-actions.js'
+export * from './dima-extensions.js'
+export * from './dima-media.js'
+export * from './dima-tasks.js'
+import { DIMA_BASE_RPC_METHODS, DIMA_CAPABILITY, DIMA_INTERACTION_CAPABILITY } from './dima.js'
+import { dimaTimelineOperations } from './dima-timeline.js'
+import { dimaActionsOperations } from './dima-actions.js'
+import { dimaExtensionsOperations } from './dima-extensions.js'
+import { DIMA_MEDIA_CHUNK_BYTES, dimaMediaOperations } from './dima-media.js'
+import { dimaTasksOperations } from './dima-tasks.js'
 import { WORKSPACE_GIT_METHODS } from './workspace-git.js'
 import { z } from 'zod'
 
@@ -226,6 +236,84 @@ export const sessionTransferMethods = [
   'session.transfer.import.status',
   'session.transfer.import.abort',
 ] as const
+
+/** The same closed set drives negotiation, decoding and dispatch on every client. */
+export const dimaOperations = Object.freeze({
+  ...dimaTimelineOperations, ...dimaActionsOperations, ...dimaExtensionsOperations,
+  ...dimaMediaOperations, ...dimaTasksOperations,
+})
+export type DimaOperation = keyof typeof dimaOperations
+export type DimaOperationRequest<K extends DimaOperation> = z.output<(typeof dimaOperations)[K]['request']>
+export type DimaOperationResult<K extends DimaOperation> = z.output<(typeof dimaOperations)[K]['result']>
+export type DimaFeatures = { read: boolean; interaction: boolean } & Record<DimaOperation, boolean>
+export const dimaOperationNames: readonly DimaOperation[] = Object.freeze(Object.keys(dimaOperations) as DimaOperation[])
+export const dimaOperationCapability = (name: DimaOperation) => `dima.appserver.${name}.v1` as const
+export const dimaOperationMethod = (name: DimaOperation) => `dima.app.${name}` as const
+/** A native compaction may use 120 seconds. Allow time for the authenticated request and its receipt. */
+export function dimaOperationTimeoutMs(method: string, params: unknown): number | undefined {
+  if (method === 'dima.app.act' && typeof params === 'object' && params !== null && 'kind' in params && params.kind === 'compact') return 135_000
+  return undefined
+}
+export function isDimaOperation(name: string): name is DimaOperation { return Object.hasOwn(dimaOperations, name) }
+export const DIMA_RPC_METHODS = [...DIMA_BASE_RPC_METHODS, ...dimaOperationNames.map(dimaOperationMethod)] as const
+
+/** Call only with capabilities belonging to the authenticated native workspace. */
+export function dimaFeatures(capabilities: readonly string[]): DimaFeatures {
+  const advertised = new Set(capabilities)
+  const read = advertised.has(DIMA_CAPABILITY)
+  const operations = Object.fromEntries(dimaOperationNames.map(name => [name, read && advertised.has(dimaOperationCapability(name))])) as Record<DimaOperation, boolean>
+  return { read, interaction: read && advertised.has(DIMA_INTERACTION_CAPABILITY), ...operations }
+}
+
+export function dimaCapabilities(features: DimaFeatures): string[] {
+  if (features.read !== true) return []
+  return [DIMA_CAPABILITY, ...(features.interaction === true ? [DIMA_INTERACTION_CAPABILITY] : []),
+    ...dimaOperationNames.filter(name => features[name] === true).map(dimaOperationCapability)]
+}
+
+export function parseDimaOperationRequest<K extends DimaOperation>(name: K, value: unknown): DimaOperationRequest<K> {
+  // TypeScript loses the key-dependent return type when indexing different Zod schemas.
+  return dimaOperations[name].request.parse(value) as DimaOperationRequest<K>
+}
+
+export function parseDimaOperationResult<K extends DimaOperation>(name: K, request: DimaOperationRequest<K>, value: unknown): DimaOperationResult<K> {
+  const result = dimaOperations[name].result.parse(value)
+  const input: Record<string, unknown> = request
+  const output: Record<string, unknown> = result
+  const same = (a: unknown, b: unknown) => {
+    if (a !== b) throw new Error('DimAgent returned a response for another operation.')
+  }
+  for (const key of ['sessionId', 'branchId', 'cwd', 'operationId', 'requestId', 'uploadId', 'format', 'sequence', 'fileId', 'mediaType', 'offset']) {
+    if (Object.hasOwn(input, key) && Object.hasOwn(output, key)) same(input[key], output[key])
+  }
+  if (name === 'act') same(input.kind, output.kind)
+  if (name === 'mediaUpload') {
+    const end = Math.min(input.totalBytes as number, (input.offset as number) + DIMA_MEDIA_CHUNK_BYTES)
+    same(output.nextOffset, end)
+    same(output.complete, end === input.totalBytes)
+  }
+  if (name === 'timeline') {
+    const cursor = input.cursor as Record<string, unknown> | undefined
+    if (cursor) {
+      same(output.through, cursor.through)
+      same(output.instanceId, cursor.instanceId)
+    }
+    const earlier = output.earlier as Record<string, unknown> | undefined
+    if (earlier) {
+      for (const field of ['sessionId', 'branchId', 'through', 'instanceId']) same(earlier[field], output[field])
+    }
+  }
+  if (name === 'taskDetail' || name === 'taskStop') {
+    const target = input.target as Record<string, unknown>
+    const echoed = output.target as Record<string, unknown>
+    for (const key of ['kind', 'branchId', 'id']) same(target[key], echoed[key])
+  }
+  if (name === 'setExtension') {
+    const item = output.item as Record<string, unknown>
+    for (const key of ['kind', 'id', 'source', 'scope', 'enabled']) same(input[key], item[key])
+  }
+  return result as DimaOperationResult<K>
+}
 
 export const rpcMethods = [
   ...sessionTransferMethods,
