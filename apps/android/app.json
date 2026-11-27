@@ -1,15 +1,15 @@
 {
   "expo": {
-    "name": "DSH Remote",
+    "name": "DSH Remote (DimAgent Test)",
     "slug": "dsh-remote",
     "scheme": "dshremote",
-    "version": "0.6.8",
+    "version": "0.6.8-dima.2",
     "orientation": "default",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
     "android": {
       "package": "io.github.liguobao.dshremote",
-      "versionCode": 76,
+      "versionCode": 79,
       "softwareKeyboardLayoutMode": "resize",
       "permissions": [
         "android.permission.REQUEST_INSTALL_PACKAGES",
